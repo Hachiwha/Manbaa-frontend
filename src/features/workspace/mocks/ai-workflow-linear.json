@@ -1,0 +1,65 @@
+{
+  "success": true,
+  "steps_completed": ["workflow_generation"],
+  "errors": [],
+  "context": {
+    "summary": "Simple two-step approval",
+    "domain": "HR",
+    "objective": "Employee submits a request and a manager approves it.",
+    "stakeholders": ["Employee", "Manager"],
+    "language": "en"
+  },
+  "entities": {
+    "actors": [
+      {
+        "id": "employee",
+        "name": "Employee",
+        "role": "Employee",
+        "description": "Submits the request."
+      },
+      {
+        "id": "manager",
+        "name": "Manager",
+        "role": "Manager",
+        "description": "Approves or rejects."
+      }
+    ],
+    "tasks": [
+      {
+        "id": "submit_request",
+        "name": "Submit request",
+        "description": "Employee fills the leave form and submits it.",
+        "actor_id": "employee",
+        "type": "human"
+      },
+      {
+        "id": "manager_review",
+        "name": "Manager review",
+        "description": "Manager validates the request against policy.",
+        "actor_id": "manager",
+        "type": "human"
+      },
+      {
+        "id": "notify_system",
+        "name": "Notify HR system",
+        "description": "System posts the approved request to HRIS.",
+        "actor_id": "manager",
+        "type": "system"
+      }
+    ],
+    "decisions": [],
+    "data_objects": [],
+    "business_rules": []
+  },
+  "flow": {
+    "start_event": "submit_request",
+    "end_events": ["notify_system"],
+    "connections": [
+      { "from_id": "submit_request", "to_id": "manager_review", "condition": null },
+      { "from_id": "manager_review", "to_id": "notify_system", "condition": null }
+    ],
+    "parallel_branches": []
+  },
+  "elsa_workflow": null,
+  "mermaid_diagram": ""
+}

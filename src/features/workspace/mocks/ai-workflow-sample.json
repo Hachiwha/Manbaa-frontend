@@ -1,0 +1,623 @@
+{
+  "success": true,
+  "context": {
+    "summary": "Advanced e-commerce order lifecycle including validation, fraud detection, payment retries, stock management, shipping, delivery and returns.",
+    "domain": "E-Commerce",
+    "objective": "Process orders with multiple decision branches and fallback paths.",
+    "stakeholders": [
+      "customer",
+      "system",
+      "fraud_service",
+      "payment_gateway",
+      "warehouse",
+      "delivery_service",
+      "support"
+    ],
+    "language": "en"
+  },
+  "entities": {
+    "actors": [
+      {
+        "id": "customer",
+        "name": "Customer",
+        "role": "User"
+      },
+      {
+        "id": "system",
+        "name": "System",
+        "role": "Automation"
+      },
+      {
+        "id": "fraud",
+        "name": "Fraud Service",
+        "role": "Security"
+      },
+      {
+        "id": "payment",
+        "name": "Payment Gateway",
+        "role": "Finance"
+      },
+      {
+        "id": "warehouse",
+        "name": "Warehouse",
+        "role": "Fulfillment"
+      },
+      {
+        "id": "delivery",
+        "name": "Delivery Service",
+        "role": "Carrier"
+      },
+      {
+        "id": "support",
+        "name": "Support Agent",
+        "role": "Support"
+      }
+    ],
+    "tasks": [
+      {
+        "id": "t1",
+        "name": "Place Order",
+        "actor_id": "customer",
+        "type": "human"
+      },
+      {
+        "id": "t2",
+        "name": "Validate Order",
+        "actor_id": "system",
+        "type": "service"
+      },
+      {
+        "id": "t3",
+        "name": "Check Customer Data",
+        "actor_id": "system",
+        "type": "service"
+      },
+      {
+        "id": "t4",
+        "name": "Fraud Check",
+        "actor_id": "fraud",
+        "type": "service"
+      },
+      {
+        "id": "t5",
+        "name": "Manual Fraud Review",
+        "actor_id": "support",
+        "type": "human"
+      },
+      {
+        "id": "t6",
+        "name": "Approve Fraud Review",
+        "actor_id": "support",
+        "type": "human"
+      },
+      {
+        "id": "t7",
+        "name": "Process Payment",
+        "actor_id": "payment",
+        "type": "service"
+      },
+      {
+        "id": "t8",
+        "name": "Payment Retry",
+        "actor_id": "customer",
+        "type": "human"
+      },
+      {
+        "id": "t9",
+        "name": "Cancel Order",
+        "actor_id": "system",
+        "type": "service"
+      },
+      {
+        "id": "t10",
+        "name": "Check Stock",
+        "actor_id": "warehouse",
+        "type": "service"
+      },
+      {
+        "id": "t11",
+        "name": "Reserve Stock",
+        "actor_id": "warehouse",
+        "type": "service"
+      },
+      {
+        "id": "t12",
+        "name": "Wait Restock",
+        "actor_id": "system",
+        "type": "service"
+      },
+      {
+        "id": "t13",
+        "name": "Pack Order",
+        "actor_id": "warehouse",
+        "type": "human"
+      },
+      {
+        "id": "t14",
+        "name": "Quality Check",
+        "actor_id": "warehouse",
+        "type": "human"
+      },
+      {
+        "id": "t15",
+        "name": "Fix Packaging Issue",
+        "actor_id": "warehouse",
+        "type": "human"
+      },
+      {
+        "id": "t16",
+        "name": "Ship Order",
+        "actor_id": "delivery",
+        "type": "service"
+      },
+      {
+        "id": "t17",
+        "name": "Track Shipment",
+        "actor_id": "system",
+        "type": "service"
+      },
+      {
+        "id": "t18",
+        "name": "Delivery Attempt",
+        "actor_id": "delivery",
+        "type": "service"
+      },
+      {
+        "id": "t19",
+        "name": "Delivery Failed",
+        "actor_id": "delivery",
+        "type": "service"
+      },
+      {
+        "id": "t20",
+        "name": "Confirm Delivery",
+        "actor_id": "customer",
+        "type": "human"
+      },
+      {
+        "id": "t21",
+        "name": "Request Return",
+        "actor_id": "customer",
+        "type": "human"
+      },
+      {
+        "id": "t22",
+        "name": "Approve Return",
+        "actor_id": "support",
+        "type": "human"
+      },
+      {
+        "id": "t23",
+        "name": "Reject Return",
+        "actor_id": "support",
+        "type": "human"
+      },
+      {
+        "id": "t24",
+        "name": "Receive Return",
+        "actor_id": "warehouse",
+        "type": "service"
+      },
+      {
+        "id": "t25",
+        "name": "Inspect Return",
+        "actor_id": "warehouse",
+        "type": "human"
+      },
+      {
+        "id": "t26",
+        "name": "Full Refund",
+        "actor_id": "payment",
+        "type": "service"
+      },
+      {
+        "id": "t27",
+        "name": "Partial Refund",
+        "actor_id": "payment",
+        "type": "service"
+      },
+      {
+        "id": "t28",
+        "name": "No Refund",
+        "actor_id": "support",
+        "type": "human"
+      },
+      {
+        "id": "t29",
+        "name": "Notify Customer",
+        "actor_id": "system",
+        "type": "service"
+      }
+    ],
+    "decisions": [
+      {
+        "id": "d1",
+        "question": "Order valid?",
+        "conditions": [
+          {
+            "label": "Yes",
+            "target_id": "t3"
+          },
+          {
+            "label": "No",
+            "target_id": "t9"
+          }
+        ]
+      },
+      {
+        "id": "d2",
+        "question": "Fraud detected?",
+        "conditions": [
+          {
+            "label": "No",
+            "target_id": "t7"
+          },
+          {
+            "label": "Yes",
+            "target_id": "t5"
+          }
+        ]
+      },
+      {
+        "id": "d3",
+        "question": "Fraud review approved?",
+        "conditions": [
+          {
+            "label": "Yes",
+            "target_id": "t7"
+          },
+          {
+            "label": "No",
+            "target_id": "t9"
+          }
+        ]
+      },
+      {
+        "id": "d4",
+        "question": "Payment successful?",
+        "conditions": [
+          {
+            "label": "Yes",
+            "target_id": "t10"
+          },
+          {
+            "label": "No",
+            "target_id": "t8"
+          }
+        ]
+      },
+      {
+        "id": "d5",
+        "question": "Retry payment success?",
+        "conditions": [
+          {
+            "label": "Yes",
+            "target_id": "t10"
+          },
+          {
+            "label": "No",
+            "target_id": "t9"
+          }
+        ]
+      },
+      {
+        "id": "d6",
+        "question": "Stock available?",
+        "conditions": [
+          {
+            "label": "Yes",
+            "target_id": "t11"
+          },
+          {
+            "label": "No",
+            "target_id": "t12"
+          }
+        ]
+      },
+      {
+        "id": "d7",
+        "question": "Packaging OK?",
+        "conditions": [
+          {
+            "label": "Yes",
+            "target_id": "t16"
+          },
+          {
+            "label": "No",
+            "target_id": "t15"
+          }
+        ]
+      },
+      {
+        "id": "d8",
+        "question": "Delivery successful?",
+        "conditions": [
+          {
+            "label": "Yes",
+            "target_id": "t20"
+          },
+          {
+            "label": "No",
+            "target_id": "t19"
+          }
+        ]
+      },
+      {
+        "id": "d9",
+        "question": "Return requested?",
+        "conditions": [
+          {
+            "label": "Yes",
+            "target_id": "t21"
+          },
+          {
+            "label": "No",
+            "target_id": "t29"
+          }
+        ]
+      },
+      {
+        "id": "d10",
+        "question": "Return approved?",
+        "conditions": [
+          {
+            "label": "Yes",
+            "target_id": "t24"
+          },
+          {
+            "label": "No",
+            "target_id": "t23"
+          }
+        ]
+      },
+      {
+        "id": "d11",
+        "question": "Refund type?",
+        "conditions": [
+          {
+            "label": "Full",
+            "target_id": "t26"
+          },
+          {
+            "label": "Partial",
+            "target_id": "t27"
+          },
+          {
+            "label": "None",
+            "target_id": "t28"
+          }
+        ]
+      }
+    ],
+    "data_objects": [
+      {
+        "id": "o1",
+        "name": "Order",
+        "type": "document"
+      },
+      {
+        "id": "o2",
+        "name": "Invoice",
+        "type": "document"
+      },
+      {
+        "id": "o3",
+        "name": "Return Request",
+        "type": "document"
+      }
+    ],
+    "business_rules": [
+      {
+        "id": "r1",
+        "description": "Payment must succeed before stock reservation.",
+        "applies_to": "t10"
+      },
+      {
+        "id": "r2",
+        "description": "Fraud flagged orders require manual review.",
+        "applies_to": "t5"
+      }
+    ]
+  },
+  "flow": {
+    "start_event": "t1",
+    "end_events": [
+      "t9",
+      "t26",
+      "t27",
+      "t28"
+    ],
+    "connections": [
+      {
+        "from_id": "t1",
+        "to_id": "d1"
+      },
+      {
+        "from_id": "d1",
+        "to_id": "t3",
+        "condition": "Yes"
+      },
+      {
+        "from_id": "d1",
+        "to_id": "t9",
+        "condition": "No"
+      },
+      {
+        "from_id": "t3",
+        "to_id": "d2"
+      },
+      {
+        "from_id": "d2",
+        "to_id": "t7",
+        "condition": "No"
+      },
+      {
+        "from_id": "d2",
+        "to_id": "t5",
+        "condition": "Yes"
+      },
+      {
+        "from_id": "t5",
+        "to_id": "d3"
+      },
+      {
+        "from_id": "d3",
+        "to_id": "t7",
+        "condition": "Yes"
+      },
+      {
+        "from_id": "d3",
+        "to_id": "t9",
+        "condition": "No"
+      },
+      {
+        "from_id": "t7",
+        "to_id": "d4"
+      },
+      {
+        "from_id": "d4",
+        "to_id": "t10",
+        "condition": "Yes"
+      },
+      {
+        "from_id": "d4",
+        "to_id": "t8",
+        "condition": "No"
+      },
+      {
+        "from_id": "t8",
+        "to_id": "d5"
+      },
+      {
+        "from_id": "d5",
+        "to_id": "t10",
+        "condition": "Yes"
+      },
+      {
+        "from_id": "d5",
+        "to_id": "t9",
+        "condition": "No"
+      },
+      {
+        "from_id": "t10",
+        "to_id": "d6"
+      },
+      {
+        "from_id": "d6",
+        "to_id": "t11",
+        "condition": "Yes"
+      },
+      {
+        "from_id": "d6",
+        "to_id": "t12",
+        "condition": "No"
+      },
+      {
+        "from_id": "t11",
+        "to_id": "t13"
+      },
+      {
+        "from_id": "t13",
+        "to_id": "t14"
+      },
+      {
+        "from_id": "t14",
+        "to_id": "d7"
+      },
+      {
+        "from_id": "d7",
+        "to_id": "t16",
+        "condition": "Yes"
+      },
+      {
+        "from_id": "d7",
+        "to_id": "t15",
+        "condition": "No"
+      },
+      {
+        "from_id": "t15",
+        "to_id": "t13"
+      },
+      {
+        "from_id": "t16",
+        "to_id": "t17"
+      },
+      {
+        "from_id": "t17",
+        "to_id": "t18"
+      },
+      {
+        "from_id": "t18",
+        "to_id": "d8"
+      },
+      {
+        "from_id": "d8",
+        "to_id": "t20",
+        "condition": "Yes"
+      },
+      {
+        "from_id": "d8",
+        "to_id": "t19",
+        "condition": "No"
+      },
+      {
+        "from_id": "t19",
+        "to_id": "t16"
+      },
+      {
+        "from_id": "t20",
+        "to_id": "d9"
+      },
+      {
+        "from_id": "d9",
+        "to_id": "t21",
+        "condition": "Yes"
+      },
+      {
+        "from_id": "d9",
+        "to_id": "t29",
+        "condition": "No"
+      },
+      {
+        "from_id": "t21",
+        "to_id": "d10"
+      },
+      {
+        "from_id": "d10",
+        "to_id": "t24",
+        "condition": "Yes"
+      },
+      {
+        "from_id": "d10",
+        "to_id": "t23",
+        "condition": "No"
+      },
+      {
+        "from_id": "t24",
+        "to_id": "t25"
+      },
+      {
+        "from_id": "t25",
+        "to_id": "d11"
+      },
+      {
+        "from_id": "d11",
+        "to_id": "t26",
+        "condition": "Full"
+      },
+      {
+        "from_id": "d11",
+        "to_id": "t27",
+        "condition": "Partial"
+      },
+      {
+        "from_id": "d11",
+        "to_id": "t28",
+        "condition": "None"
+      }
+    ],
+    "parallel_branches": []
+  },
+  "elsa_workflow": null,
+  "mermaid_diagram": "graph TD\nA[Start] --> B[Order] --> C{Valid?} -->|Yes| D[Fraud] --> E{Payment?}"
+}
