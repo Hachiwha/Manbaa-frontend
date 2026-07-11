@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { login, HttpError } from "@/lib/api";
+import { requireGuest } from "@/lib/auth/guards";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -15,6 +16,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export const Route = createFileRoute("/login")({
+  beforeLoad: requireGuest,
   component: LoginPage,
 });
 
@@ -115,7 +117,7 @@ function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   {...register("password")}
-                  className="flex h-11 w-full rounded-pill border border-hairline bg-canvas px-4 text-body text-ink placeholder:text-ink-muted-48 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-11 w-full rounded-pill border border-hairline bg-canvas pl-4 pr-11 text-body text-ink placeholder:text-ink-muted-48 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="••••••••"
                 />
                 <button

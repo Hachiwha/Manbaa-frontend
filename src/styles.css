@@ -74,6 +74,14 @@
   --color-primary-focus: var(--primary-focus);
   --color-primary-on-dark: var(--primary-on-dark);
 
+  /* shadcn sidebar slots, remapped onto Manbaa tokens (see AppSidebar) */
+  --color-sidebar: var(--canvas-parchment);
+  --color-sidebar-foreground: var(--ink);
+  --color-sidebar-border: var(--hairline);
+  --color-sidebar-ring: var(--primary-focus);
+  --color-sidebar-accent: var(--canvas);
+  --color-sidebar-accent-foreground: var(--ink);
+
   --shadow-product: var(--shadow-product);
   --shadow-hairline: var(--shadow-hairline);
 }

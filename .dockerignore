@@ -1,0 +1,11 @@
+node_modules
+dist
+.wrangler
+.tanstack
+.git
+.claude
+docs
+*.md
+.env
+.env.*
+npm-debug.log*

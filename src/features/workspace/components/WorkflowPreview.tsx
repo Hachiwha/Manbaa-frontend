@@ -1,4 +1,11 @@
-import { useEffect, useLayoutEffect, useMemo, useState, useRef, useCallback } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
 import { createPortal } from "react-dom";
 import ReactFlow, {
   Background,
@@ -8,15 +15,15 @@ import ReactFlow, {
   useReactFlow,
   type Node,
   type Edge,
+  type Connection,
+  type NodeChange,
+  type EdgeChange,
   ReactFlowProvider,
-  useKeyPress,
 } from "reactflow";
 import { motion } from "framer-motion";
 import {
   Maximize2,
   Minimize2,
-  Rocket,
-  Download,
   Coins,
   Gauge,
   FileJson,
@@ -28,13 +35,9 @@ import {
   Hand,
   StickyNote,
   Type,
-  Shapes,
   Square,
-  Undo2,
-  Redo2,
   ZoomIn,
   ZoomOut,
-  Sparkles,
 } from "lucide-react";
 import BpmnViewer from "bpmn-js/lib/NavigatedViewer";
 import { jsonToBpmn } from "@/lib/jsonToBpmn";
@@ -52,11 +55,26 @@ import {
   RfStubNode,
 } from "./aiFlowNodes";
 import {
+  StickyNoteNode,
+  TextNode,
+  HeadingNode,
+  ShapeNode,
+  FrameNode,
+  SourceCardNode,
+  CitationCardNode,
+  ChatResponseNode,
+  ConceptCardNode,
+  AssetCardNode,
+} from "./sketchNodes";
+import {
   isRfFlowNodeData,
+  isSketchNodeData,
   type FlowEdge,
   type FlowNode,
   type FlowStepData,
   type RfFlowNodeData,
+  type SketchNodeData,
+  type SketchNodeKind,
 } from "../types";
 import { cn } from "@/lib/utils";
 import type { AiWorkflowResponse } from "../aiWorkflow.types";
@@ -64,6 +82,17 @@ import type { AiWorkflowResponse } from "../aiWorkflow.types";
 interface WorkflowPreviewProps {
   nodes: FlowNode[];
   edges: FlowEdge[];
+  onNodesChange?: (changes: NodeChange[]) => void;
+  onEdgesChange?: (changes: EdgeChange[]) => void;
+  onConnect?: (connection: Connection) => void;
+  onAddNode?: (
+    kind: SketchNodeKind,
+    position: { x: number; y: number },
+  ) => void;
+  onDeleteNode?: (id: string) => void;
+  onDuplicateNode?: (id: string) => void;
+  onBringNodeToFront?: (id: string) => void;
+  onSendNodeToBack?: (id: string) => void;
   workflowData?: AiWorkflowResponse;
   estimatedTokens?: number;
   accuracy?: "Low" | "Medium" | "High";
@@ -79,6 +108,23 @@ const nodeTypes = {
   rfTask: RfTaskNode,
   rfDecision: RfDecisionNode,
   rfStub: RfStubNode,
+  "sticky-note": StickyNoteNode,
+  text: TextNode,
+  heading: HeadingNode,
+  shape: ShapeNode,
+  frame: FrameNode,
+  "source-card": SourceCardNode,
+  "citation-card": CitationCardNode,
+  "chat-response": ChatResponseNode,
+  "concept-card": ConceptCardNode,
+  "asset-card": AssetCardNode,
+};
+
+const TOOL_TO_SKETCH_KIND: Partial<Record<string, SketchNodeKind>> = {
+  note: "sticky-note",
+  text: "text",
+  shape: "shape",
+  frame: "frame",
 };
 
 function FitViewOnLayout({ layoutKey }: { layoutKey: string }) {
@@ -132,6 +178,14 @@ function FlowDiagram({
   contextMenu,
   setContextMenu,
   onChooseNodeInChat,
+  onNodesChange,
+  onEdgesChange,
+  onConnect,
+  onAddNode,
+  onDeleteNode,
+  onDuplicateNode,
+  onBringNodeToFront,
+  onSendNodeToBack,
 }: {
   nodesWithSelection: FlowNode[];
   styledEdges: Edge[];
@@ -143,26 +197,59 @@ function FlowDiagram({
     v: { node: FlowNode; position: { x: number; y: number } } | null,
   ) => void;
   onChooseNodeInChat?: (node: FlowNode) => void;
+  onNodesChange?: (changes: NodeChange[]) => void;
+  onEdgesChange?: (changes: EdgeChange[]) => void;
+  onConnect?: (connection: Connection) => void;
+  onAddNode?: (
+    kind: SketchNodeKind,
+    position: { x: number; y: number },
+  ) => void;
+  onDeleteNode?: (id: string) => void;
+  onDuplicateNode?: (id: string) => void;
+  onBringNodeToFront?: (id: string) => void;
+  onSendNodeToBack?: (id: string) => void;
 }) {
   const [activeTool, setActiveTool] = useState("select");
   const [zoomLevel, setZoomLevel] = useState(100);
-  const { zoomIn, zoomOut, fitView } = useReactFlow();
+  const { zoomIn, zoomOut, fitView, screenToFlowPosition, getViewport } =
+    useReactFlow();
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
+  const handlePaneClick = useCallback(
+    (e: React.MouseEvent) => {
+      const kind = TOOL_TO_SKETCH_KIND[activeTool];
+      if (kind && onAddNode) {
+        const position = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+        onAddNode(kind, position);
+        setActiveTool("select");
+        return;
+      }
       setSelected(null);
-      setContextMenu(null);
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
-      e.preventDefault();
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key === "z" && e.shiftKey) {
-      e.preventDefault();
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key === "a") {
-      e.preventDefault();
-    }
-  }, [setSelected, setContextMenu]);
+    },
+    [activeTool, onAddNode, screenToFlowPosition, setSelected],
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelected(null);
+        setContextMenu(null);
+      }
+      if (
+        (e.key === "Delete" || e.key === "Backspace") &&
+        selected &&
+        onDeleteNode
+      ) {
+        const target = e.target as HTMLElement;
+        const isEditingText =
+          target.tagName === "INPUT" || target.tagName === "TEXTAREA";
+        if (!isEditingText) {
+          onDeleteNode(selected.id);
+          setSelected(null);
+        }
+      }
+    },
+    [selected, onDeleteNode, setSelected, setContextMenu],
+  );
 
   const handleZoomIn = useCallback(() => {
     zoomIn();
@@ -181,10 +268,12 @@ function FlowDiagram({
 
   return (
     <>
-      {/* Board toolbar */}
-      <div className="pointer-events-none absolute left-1/2 top-3 z-10 -translate-x-1/2">
-        <div className="pointer-events-auto flex items-center gap-0.5 rounded-pill border border-hairline bg-canvas px-1.5 py-1 shadow-[var(--shadow-hairline)]">
-          <div className="flex items-center gap-0.5">
+      {/* Board toolbar. Centered via flex (not left-1/2 + -translate-x-1/2)
+          so the pill can shrink/scroll instead of clipping off both edges
+          of narrow (<400px) viewports. */}
+      <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center px-3">
+        <div className="pointer-events-auto flex max-w-full min-w-0 items-center gap-0.5 overflow-x-auto rounded-pill border border-hairline bg-canvas px-1.5 py-1 shadow-[var(--shadow-hairline)] scrollbar-thin">
+          <div className="flex shrink-0 items-center gap-0.5">
             {TOOLBAR_TOOLS.map((tool) => {
               const Icon = tool.icon;
               return (
@@ -193,7 +282,7 @@ function FlowDiagram({
                   type="button"
                   onClick={() => setActiveTool(tool.id)}
                   aria-label={tool.label}
-                  className={`grid h-9 w-9 place-items-center rounded-md transition-all active:scale-90 ${
+                  className={`grid h-9 w-9 shrink-0 place-items-center rounded-md transition-all active:scale-90 ${
                     activeTool === tool.id
                       ? "bg-primary/15 text-primary"
                       : "text-ink-muted-48 hover:bg-surface-2 hover:text-ink"
@@ -204,24 +293,23 @@ function FlowDiagram({
               );
             })}
           </div>
-          <div className="mx-1.5 h-6 w-px bg-hairline" />
-          <div className="flex items-center gap-0.5">
+          <div className="flex shrink-0 items-center gap-0.5">
             <button
               type="button"
               onClick={handleZoomOut}
               aria-label="Zoom out"
-              className="grid h-9 w-9 place-items-center rounded-md text-ink-muted-48 transition-all active:scale-90 hover:bg-surface-2 hover:text-ink"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-ink-muted-48 transition-all active:scale-90 hover:bg-surface-2 hover:text-ink"
             >
               <ZoomOut className="h-4 w-4" />
             </button>
-            <span className="min-w-[36px] text-center text-fine-print font-medium text-ink">
+            <span className="min-w-[36px] shrink-0 text-center text-fine-print font-medium text-ink">
               {zoomLevel}%
             </span>
             <button
               type="button"
               onClick={handleZoomIn}
               aria-label="Zoom in"
-              className="grid h-9 w-9 place-items-center rounded-md text-ink-muted-48 transition-all active:scale-90 hover:bg-surface-2 hover:text-ink"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-ink-muted-48 transition-all active:scale-90 hover:bg-surface-2 hover:text-ink"
             >
               <ZoomIn className="h-4 w-4" />
             </button>
@@ -229,7 +317,7 @@ function FlowDiagram({
               type="button"
               onClick={handleFitView}
               aria-label="Fit view"
-              className="grid h-9 w-9 place-items-center rounded-md text-ink-muted-48 transition-all active:scale-90 hover:bg-surface-2 hover:text-ink"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-ink-muted-48 transition-all active:scale-90 hover:bg-surface-2 hover:text-ink"
             >
               <Minimize2 className="h-3.5 w-3.5" />
             </button>
@@ -246,8 +334,11 @@ function FlowDiagram({
         minZoom={0.4}
         maxZoom={1.6}
         proOptions={{ hideAttribution: true }}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onConnect={onConnect}
         onNodeClick={(_, n) => setSelected(n as FlowNode)}
-        onPaneClick={() => setSelected(null)}
+        onPaneClick={handlePaneClick}
         onNodeContextMenu={(e, n) => {
           e.preventDefault();
           setContextMenu({
@@ -257,11 +348,7 @@ function FlowDiagram({
         }}
         onKeyDown={handleKeyDown}
         onMoveEnd={() => {
-          const rf = (window as any).__reactFlowInstance;
-          if (rf) {
-            const vp = rf.getViewport();
-            setZoomLevel(Math.round(vp.zoom * 100));
-          }
+          setZoomLevel(Math.round(getViewport().zoom * 100));
         }}
       >
         <FitViewOnLayout
@@ -305,6 +392,8 @@ function FlowDiagram({
 
           {isRfFlowNodeData(selected.data) ? (
             <RfInspector data={selected.data} id={selected.id} />
+          ) : isSketchNodeData(selected.data) ? (
+            <SketchInspector data={selected.data} id={selected.id} />
           ) : (
             <>
               <h4 className="mt-1.5 text-sm font-semibold">
@@ -339,17 +428,16 @@ function FlowDiagram({
           node={contextMenu.node}
           position={contextMenu.position}
           onClose={() => setContextMenu(null)}
-          onAddComment={(nodeId) => {
-            const comment = window.prompt(
-              `Add comment for "${contextMenu.node.data?.title || nodeId}":`,
-            );
-            if (comment) {
-              console.log("Create comment:", { nodeId, comment });
-            }
-          }}
           onChooseInChat={(node) => {
             if (onChooseNodeInChat) onChooseNodeInChat(node);
           }}
+          onDuplicate={onDuplicateNode}
+          onDelete={(nodeId) => {
+            if (selected?.id === nodeId) setSelected(null);
+            onDeleteNode?.(nodeId);
+          }}
+          onBringToFront={onBringNodeToFront}
+          onSendToBack={onSendNodeToBack}
         />
       )}
     </>
@@ -415,9 +503,59 @@ function RfInspector({ data, id }: { data: RfFlowNodeData; id: string }) {
   );
 }
 
+function SketchInspector({ data, id }: { data: SketchNodeData; id: string }) {
+  return (
+    <>
+      <p className="mt-1 text-[9px] font-mono uppercase tracking-wide text-muted-foreground">
+        Node id · {id}
+      </p>
+      <h4 className="mt-1.5 text-sm font-semibold capitalize">
+        {data.title || data.kind.replace(/-/g, " ")}
+      </h4>
+      {data.content && (
+        <p className="mt-0.5 line-clamp-4 text-[11.5px] leading-snug text-muted-foreground">
+          {data.content}
+        </p>
+      )}
+      <dl className="mt-2.5 space-y-1.5 text-[11px]">
+        <div className="flex justify-between gap-2">
+          <dt className="text-muted-foreground">Kind</dt>
+          <dd className="font-medium capitalize text-foreground">
+            {data.kind.replace(/-/g, " ")}
+          </dd>
+        </div>
+        {data.sourceType ? (
+          <div className="flex justify-between gap-2">
+            <dt className="text-muted-foreground">Source type</dt>
+            <dd className="font-medium capitalize text-foreground">
+              {data.sourceType}
+            </dd>
+          </div>
+        ) : null}
+        {data.assetType ? (
+          <div className="flex justify-between gap-2">
+            <dt className="text-muted-foreground">Asset type</dt>
+            <dd className="font-medium capitalize text-foreground">
+              {data.assetType}
+            </dd>
+          </div>
+        ) : null}
+      </dl>
+    </>
+  );
+}
+
 export function WorkflowPreview({
   nodes,
   edges,
+  onNodesChange,
+  onEdgesChange,
+  onConnect,
+  onAddNode,
+  onDeleteNode,
+  onDuplicateNode,
+  onBringNodeToFront,
+  onSendNodeToBack,
   workflowData,
   estimatedTokens = 12_400,
   accuracy = "High",
@@ -453,7 +591,7 @@ export function WorkflowPreview({
 
       const viewer = new BpmnViewer({ container: tempDiv });
       await viewer.importXML(xml);
-      const canvas = viewer.get("canvas") as any;
+      const canvas = viewer.get("canvas") as { zoom: (mode: string) => void };
       canvas.zoom("fit-viewport");
 
       const { svg } = await viewer.saveSVG();
@@ -647,6 +785,14 @@ export function WorkflowPreview({
             contextMenu={contextMenu}
             setContextMenu={setContextMenu}
             onChooseNodeInChat={onChooseNodeInChat}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onAddNode={onAddNode}
+            onDeleteNode={onDeleteNode}
+            onDuplicateNode={onDuplicateNode}
+            onBringNodeToFront={onBringNodeToFront}
+            onSendNodeToBack={onSendNodeToBack}
           />
         </div>
       </ReactFlowProvider>

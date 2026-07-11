@@ -19,9 +19,9 @@ import {
   HelpCircle,
   BookOpen,
   Trash2,
-  Eye,
   ToggleLeft,
   ToggleRight,
+  LayoutTemplate,
 } from "lucide-react";
 import { uploadDocument, deleteDocument } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -56,7 +56,10 @@ const typeColors: Record<SourceType, string> = {
 };
 
 function newSourceId() {
-  return globalThis.crypto?.randomUUID?.() ?? `src_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `src_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+  );
 }
 
 function isValidUrl(str: string) {
@@ -72,12 +75,21 @@ interface SourcesPanelProps {
   sources: WorkspaceSource[];
   versions: VersionEntry[];
   onCollapse?: () => void;
+  onAddToBoard?: (source: WorkspaceSource) => void;
   sessionId?: string;
   workflowId?: string;
   className?: string;
 }
 
-export function SourcesPanel({ sources: initialSources, versions, onCollapse, sessionId, workflowId, className }: SourcesPanelProps) {
+export function SourcesPanel({
+  sources: initialSources,
+  versions,
+  onCollapse,
+  onAddToBoard,
+  sessionId,
+  workflowId,
+  className,
+}: SourcesPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const [items, setItems] = useState(initialSources);
@@ -86,17 +98,27 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
   const [dragOver, setDragOver] = useState(false);
 
   const uploadMutation = useMutation({
-    mutationFn: ({ file, sessionId: sid, workflowId: wid }: { file: File; sessionId: string; workflowId?: string }) =>
-      uploadDocument({ file, sessionId: sid, workflowId: wid }),
+    mutationFn: ({
+      file,
+      sessionId: sid,
+      workflowId: wid,
+    }: {
+      file: File;
+      sessionId: string;
+      workflowId?: string;
+    }) => uploadDocument({ file, sessionId: sid, workflowId: wid }),
     onSuccess: (newDoc) => {
       setItems((prev) => [
         {
           id: newDoc.id,
           name: newDoc.filename,
-          type: newDoc.fileType?.includes("pdf") ? "pdf"
-            : newDoc.fileType?.includes("image") ? "image"
-            : newDoc.fileType?.includes("word") ? "doc"
-            : "text" as const,
+          type: newDoc.fileType?.includes("pdf")
+            ? "pdf"
+            : newDoc.fileType?.includes("image")
+              ? "image"
+              : newDoc.fileType?.includes("word")
+                ? "doc"
+                : ("text" as const),
           size: formatFileSize(newDoc.fileSizeBytes),
           status: "ready" as const,
           included: true,
@@ -115,50 +137,71 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
   });
 
   const toggleIncluded = useCallback((id: string) => {
-    setItems((prev) => prev.map((s) => (s.id === id ? { ...s, included: !s.included } : s)));
+    setItems((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, included: !s.included } : s)),
+    );
   }, []);
 
-  const removeSource = useCallback((id: string) => {
-    if (sessionId && workflowId) {
-      deleteMutation.mutate(id);
-    } else {
-      setItems((prev) => prev.filter((s) => s.id !== id));
-    }
-  }, [sessionId, workflowId, deleteMutation]);
+  const removeSource = useCallback(
+    (id: string) => {
+      if (sessionId && workflowId) {
+        deleteMutation.mutate(id);
+      } else {
+        setItems((prev) => prev.filter((s) => s.id !== id));
+      }
+    },
+    [sessionId, workflowId, deleteMutation],
+  );
 
-  const ingestFiles = useCallback(async (fileList: FileList | File[] | null) => {
-    if (!fileList || fileList.length === 0) return;
-    if (!sessionId) {
+  const ingestFiles = useCallback(
+    async (fileList: FileList | File[] | null) => {
+      if (!fileList || fileList.length === 0) return;
+      if (!sessionId) {
+        const files = Array.from(fileList as FileList);
+        const additions: WorkspaceSource[] = [];
+        for (const file of files) {
+          const type = mimeToWorkspaceSourceType(file.type);
+          if (!type) continue;
+          additions.push({
+            id: newSourceId(),
+            name: file.name,
+            type,
+            size: formatFileSize(file.size),
+            status: "uploading",
+            included: true,
+          });
+        }
+        if (additions.length > 0) setItems((prev) => [...additions, ...prev]);
+        return;
+      }
       const files = Array.from(fileList as FileList);
-      const additions: WorkspaceSource[] = [];
       for (const file of files) {
         const type = mimeToWorkspaceSourceType(file.type);
         if (!type) continue;
-        additions.push({
-          id: newSourceId(),
-          name: file.name,
-          type,
-          size: formatFileSize(file.size),
-          status: "uploading",
-          included: true,
-        });
+        const tempId = newSourceId();
+        setItems((prev) => [
+          ...prev,
+          {
+            id: tempId,
+            name: file.name,
+            type,
+            size: formatFileSize(file.size),
+            status: "uploading",
+            included: true,
+          },
+        ]);
+        uploadMutation.mutate(
+          { file, sessionId, workflowId },
+          {
+            onError: () =>
+              setItems((prev) => prev.filter((s) => s.id !== tempId)),
+          },
+        );
       }
-      if (additions.length > 0) setItems((prev) => [...additions, ...prev]);
-      return;
-    }
-    const files = Array.from(fileList as FileList);
-    for (const file of files) {
-      const type = mimeToWorkspaceSourceType(file.type);
-      if (!type) continue;
-      const tempId = newSourceId();
-      setItems((prev) => [...prev, { id: tempId, name: file.name, type, size: formatFileSize(file.size), status: "uploading", included: true }]);
-      uploadMutation.mutate(
-        { file, sessionId, workflowId },
-        { onError: () => setItems((prev) => prev.filter((s) => s.id !== tempId)) },
-      );
-    }
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  }, [sessionId, workflowId, uploadMutation]);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    },
+    [sessionId, workflowId, uploadMutation],
+  );
 
   const handleUrlAdd = useCallback(() => {
     if (!urlValue.trim() || !isValidUrl(urlValue.trim())) return;
@@ -175,12 +218,15 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
     setUrlValue("");
   }, [urlValue]);
 
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOver(false);
-    ingestFiles(e.dataTransfer.files);
-  }, [ingestFiles]);
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragOver(false);
+      ingestFiles(e.dataTransfer.files);
+    },
+    [ingestFiles],
+  );
 
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -190,19 +236,43 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
 
   const onDragLeave = useCallback(() => setDragOver(false), []);
 
-  const filtered = items.filter((s) => s.name.toLowerCase().includes(filter.toLowerCase()));
+  const filtered = items.filter((s) =>
+    s.name.toLowerCase().includes(filter.toLowerCase()),
+  );
 
   return (
-    <aside className={cn("flex h-full w-full flex-col border-r border-hairline bg-surface lg:w-[clamp(240px,22vw,300px)]", className)}>
-      <input ref={fileInputRef} type="file" multiple accept={ACCEPT_ATTRIBUTE} className="sr-only" aria-hidden onChange={(e) => ingestFiles(e.target.files)} />
+    <aside
+      className={cn(
+        "flex h-full w-full flex-col border-r border-hairline bg-surface lg:w-[clamp(240px,22vw,300px)]",
+        className,
+      )}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept={ACCEPT_ATTRIBUTE}
+        className="sr-only"
+        aria-hidden
+        onChange={(e) => ingestFiles(e.target.files)}
+      />
 
       <div className="flex items-center justify-between px-4 pt-4">
         <div className="flex items-center gap-2">
-          <span className="text-fine-print font-semibold uppercase tracking-[0.16em] text-ink-muted-48">Sources</span>
-          <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-ink-muted-48">{items.length}</span>
+          <span className="text-fine-print font-semibold uppercase tracking-[0.16em] text-ink-muted-48">
+            Sources
+          </span>
+          <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-ink-muted-48">
+            {items.length}
+          </span>
         </div>
         {onCollapse && (
-          <button type="button" onClick={onCollapse} className="grid h-7 w-7 place-items-center rounded-md text-ink-muted-48 transition-colors active:scale-95 hover:bg-surface-2 hover:text-ink" aria-label="Collapse sidebar">
+          <button
+            type="button"
+            onClick={onCollapse}
+            className="grid h-7 w-7 place-items-center rounded-md text-ink-muted-48 transition-colors active:scale-95 hover:bg-surface-2 hover:text-ink"
+            aria-label="Collapse sidebar"
+          >
             <PanelLeftClose className="h-4 w-4" />
           </button>
         )}
@@ -210,7 +280,11 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
 
       {/* Add sources button */}
       <div className="px-3 pt-3">
-        <button type="button" onClick={() => fileInputRef.current?.click()} className="group flex w-full items-center justify-center gap-2 rounded-pill border border-primary/40 bg-primary/10 px-4 py-2.5 text-body-strong text-primary transition-all active:scale-95 hover:border-primary/60 hover:bg-primary/20">
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="group flex w-full items-center justify-center gap-2 rounded-pill border border-primary/40 bg-primary/10 px-4 py-2.5 text-body-strong text-primary transition-all active:scale-95 hover:border-primary/60 hover:bg-primary/20"
+        >
           <Plus className="h-4 w-4" />
           Add sources
         </button>
@@ -223,7 +297,9 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
           <input
             value={urlValue}
             onChange={(e) => setUrlValue(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleUrlAdd(); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleUrlAdd();
+            }}
             placeholder="Paste a URL..."
             className="min-w-0 flex-1 bg-transparent text-caption text-ink placeholder:text-ink-muted-48 focus:outline-none"
           />
@@ -257,7 +333,9 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
           <div className="flex flex-col items-center gap-2 py-8 text-center">
             <FileText className="h-10 w-10 text-ink-muted-48" />
             <p className="text-body-strong text-ink">No sources yet</p>
-            <p className="text-caption text-ink-muted-48">Upload files or paste a URL to get started</p>
+            <p className="text-caption text-ink-muted-48">
+              Upload files or paste a URL to get started
+            </p>
           </div>
         ) : (
           <ul className="space-y-0.5">
@@ -275,11 +353,15 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
                     className="group/row"
                   >
                     <div className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-surface-2">
-                      <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-md ${color}`}>
+                      <span
+                        className={`grid h-8 w-8 shrink-0 place-items-center rounded-md ${color}`}
+                      >
                         <Icon className="h-4 w-4" />
                       </span>
                       <div className="min-w-0 flex-1 overflow-hidden">
-                        <div className={`truncate text-caption-strong ${s.included ? "text-ink" : "text-ink-muted-48 line-through decoration-1"}`}>
+                        <div
+                          className={`truncate text-caption-strong ${s.included ? "text-ink" : "text-ink-muted-48 line-through decoration-1"}`}
+                        >
                           {s.name}
                         </div>
                         <div className="flex items-center gap-1.5 text-fine-print text-ink-muted-48">
@@ -297,11 +379,20 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
                             <ChevronRight className="h-4 w-4" />
                           </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem onClick={() => {}} className="flex items-center gap-2 text-caption">
-                            <Eye className="h-3.5 w-3.5" /> Preview
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleIncluded(s.id)} className="flex items-center gap-2 text-caption">
+                        <DropdownMenuContent align="end" className="w-44">
+                          {onAddToBoard && (
+                            <DropdownMenuItem
+                              onClick={() => onAddToBoard(s)}
+                              className="flex items-center gap-2 text-caption"
+                            >
+                              <LayoutTemplate className="h-3.5 w-3.5" /> Add to
+                              board
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem
+                            onClick={() => toggleIncluded(s.id)}
+                            className="flex items-center gap-2 text-caption"
+                          >
                             {s.included ? (
                               <ToggleRight className="h-3.5 w-3.5" />
                             ) : (
@@ -310,7 +401,10 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
                             {s.included ? "Disable for AI" : "Enable for AI"}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => removeSource(s.id)} className="flex items-center gap-2 text-caption text-destructive focus:text-destructive">
+                          <DropdownMenuItem
+                            onClick={() => removeSource(s.id)}
+                            className="flex items-center gap-2 text-caption text-destructive focus:text-destructive"
+                          >
                             <Trash2 className="h-3.5 w-3.5" /> Delete
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -335,24 +429,37 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
         <div
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInputRef.current?.click(); } }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              fileInputRef.current?.click();
+            }
+          }}
           onClick={() => fileInputRef.current?.click()}
           onDrop={onDrop}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           className={cn(
             "mt-4 cursor-pointer rounded-lg border-2 border-dashed p-5 text-center transition-colors",
-            dragOver ? "border-primary bg-primary/5" : "border-hairline hover:border-primary/40 hover:bg-surface/60",
+            dragOver
+              ? "border-primary bg-primary/5"
+              : "border-hairline hover:border-primary/40 hover:bg-surface/60",
           )}
         >
           <Upload className="mx-auto h-6 w-6 text-ink-muted-48" />
-          <p className="mt-2 text-caption-strong text-ink-muted-80">Drop files here</p>
-          <p className="mt-1 text-fine-print text-ink-muted-48">PDF, PNG, JPEG, WebP, TXT, MD, DOCX, MP3, WAV</p>
+          <p className="mt-2 text-caption-strong text-ink-muted-80">
+            Drop files here
+          </p>
+          <p className="mt-1 text-fine-print text-ink-muted-48">
+            PDF, PNG, JPEG, WebP, TXT, MD, DOCX, MP3, WAV
+          </p>
         </div>
 
         {/* Versions */}
         <div className="mt-5 flex items-center justify-between px-2">
-          <span className="text-fine-print font-semibold uppercase tracking-[0.16em] text-ink-muted-48">Versions</span>
+          <span className="text-fine-print font-semibold uppercase tracking-[0.16em] text-ink-muted-48">
+            Versions
+          </span>
         </div>
         <ul className="mt-1.5 space-y-0.5">
           {versions.map((v) => (
@@ -360,14 +467,20 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
               <button
                 type="button"
                 className={`flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-fine-print transition-colors active:scale-[0.98] ${
-                  v.active ? "bg-primary/15 text-ink" : "text-ink-muted-48 hover:bg-surface-2 hover:text-ink"
+                  v.active
+                    ? "bg-primary/15 text-ink"
+                    : "text-ink-muted-48 hover:bg-surface-2 hover:text-ink"
                 }`}
               >
                 <span className="flex items-center gap-2">
-                  <span className={`h-1.5 w-1.5 rounded-full ${v.active ? "bg-primary" : "bg-border-strong"}`} />
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${v.active ? "bg-primary" : "bg-border-strong"}`}
+                  />
                   {v.label}
                 </span>
-                <span className="text-fine-print text-ink-muted-48">{v.timestamp}</span>
+                <span className="text-fine-print text-ink-muted-48">
+                  {v.timestamp}
+                </span>
               </button>
             </li>
           ))}
@@ -377,10 +490,16 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
       {/* Footer */}
       <div className="border-t border-hairline px-3 py-2">
         <div className="flex items-center justify-between text-fine-print text-ink-muted-48">
-          <button type="button" className="flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors active:scale-95 hover:text-ink">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors active:scale-95 hover:text-ink"
+          >
             <BookOpen className="h-3.5 w-3.5" /> Docs
           </button>
-          <button type="button" className="flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors active:scale-95 hover:text-ink">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors active:scale-95 hover:text-ink"
+          >
             <HelpCircle className="h-3.5 w-3.5" /> Help
           </button>
         </div>

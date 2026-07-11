@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { register as registerApi, HttpError } from "@/lib/api";
+import { requireGuest } from "@/lib/auth/guards";
 
 const registerSchema = z
   .object({
@@ -25,6 +26,7 @@ const registerSchema = z
 type RegisterForm = z.infer<typeof registerSchema>;
 
 export const Route = createFileRoute("/register")({
+  beforeLoad: requireGuest,
   component: RegisterPage,
 });
 
@@ -174,7 +176,7 @@ function RegisterPage() {
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                   {...register("password")}
-                  className="flex h-11 w-full rounded-pill border border-hairline bg-canvas px-4 text-body text-ink placeholder:text-ink-muted-48 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-11 w-full rounded-pill border border-hairline bg-canvas pl-4 pr-11 text-body text-ink placeholder:text-ink-muted-48 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="••••••••"
                 />
                 <button
@@ -229,7 +231,7 @@ function RegisterPage() {
                   type={showConfirm ? "text" : "password"}
                   autoComplete="new-password"
                   {...register("confirmPassword")}
-                  className="flex h-11 w-full rounded-pill border border-hairline bg-canvas px-4 text-body text-ink placeholder:text-ink-muted-48 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-11 w-full rounded-pill border border-hairline bg-canvas pl-4 pr-11 text-body text-ink placeholder:text-ink-muted-48 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="••••••••"
                 />
                 <button
