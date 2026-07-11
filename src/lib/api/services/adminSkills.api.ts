@@ -7,6 +7,6 @@ export function getAdminSkillsAnalytics(signal?: AbortSignal) {
   return apiClient<AdminSkillAnalyticsResponse>(
     apiUrl("/admin/skills/analytics"),
     { method: "GET" },
-    { signal }
+    { signal },
   );
 }

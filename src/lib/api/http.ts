@@ -4,7 +4,7 @@ export class HttpError extends Error {
   constructor(
     public status: number,
     public data: unknown,
-    message?: string
+    message?: string,
   ) {
     super(message ?? "HTTP Error");
     this.name = "HttpError";
@@ -36,14 +36,24 @@ export type HttpRequestOptions = RequestInit & {
  * Low-level transport: fetch with timeout, credentials, JSON or multipart bodies, typed response parsing.
  * Use `apiClient` for JSON + optional Zod on top of this.
  */
-export async function http<T = unknown>(url: string, options: HttpRequestOptions = {}): Promise<T> {
-  const { parseAs = "json", timeoutMs = DEFAULT_TIMEOUT_MS, withAuth = true, ...init } = options;
+export async function http<T = unknown>(
+  url: string,
+  options: HttpRequestOptions = {},
+): Promise<T> {
+  const {
+    parseAs = "json",
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    withAuth = true,
+    ...init
+  } = options;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   const isFormData =
-    init.body != null && typeof FormData !== "undefined" && init.body instanceof FormData;
+    init.body != null &&
+    typeof FormData !== "undefined" &&
+    init.body instanceof FormData;
 
   const headers = new Headers(init.headers);
   if (withAuth) {
@@ -81,7 +91,8 @@ export async function http<T = unknown>(url: string, options: HttpRequestOptions
       throw new HttpError(
         res.status,
         error,
-        extractErrorMessage(error) ?? (typeof text === "string" && text ? text : undefined)
+        extractErrorMessage(error) ??
+          (typeof text === "string" && text ? text : undefined),
       );
     }
 

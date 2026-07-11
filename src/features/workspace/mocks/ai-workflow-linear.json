@@ -55,8 +55,16 @@
     "start_event": "submit_request",
     "end_events": ["notify_system"],
     "connections": [
-      { "from_id": "submit_request", "to_id": "manager_review", "condition": null },
-      { "from_id": "manager_review", "to_id": "notify_system", "condition": null }
+      {
+        "from_id": "submit_request",
+        "to_id": "manager_review",
+        "condition": null
+      },
+      {
+        "from_id": "manager_review",
+        "to_id": "notify_system",
+        "condition": null
+      }
     ],
     "parallel_branches": []
   },

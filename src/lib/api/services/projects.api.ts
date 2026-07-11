@@ -50,11 +50,14 @@ export interface CreateProjectBody {
 /* ---------- API functions ---------- */
 
 /** `GET /projects` */
-export function listProjects(query?: { search?: string; page?: number; limit?: number }, signal?: AbortSignal) {
+export function listProjects(
+  query?: { search?: string; page?: number; limit?: number },
+  signal?: AbortSignal,
+) {
   return apiClient<ProjectsListResponse>(
     apiUrl("/projects", query ? { ...query } : undefined),
     { method: "GET" },
-    { signal }
+    { signal },
   );
 }
 
@@ -63,7 +66,7 @@ export function createProject(body: CreateProjectBody, signal?: AbortSignal) {
   return apiClient<{ project: BackendProject }>(
     apiUrl("/projects"),
     { method: "POST", body: json(body) },
-    { signal }
+    { signal },
   );
 }
 
@@ -72,16 +75,23 @@ export function getProject(projectId: string, signal?: AbortSignal) {
   return apiClient<{ project: BackendProject }>(
     apiUrl(`/projects/${encodeURIComponent(projectId)}`),
     { method: "GET" },
-    { signal }
+    { signal },
   );
 }
 
 /** `GET /projects/:id/workflows` */
-export function listProjectWorkflows(projectId: string, query?: { page?: number; limit?: number }, signal?: AbortSignal) {
+export function listProjectWorkflows(
+  projectId: string,
+  query?: { page?: number; limit?: number },
+  signal?: AbortSignal,
+) {
   return apiClient<ProjectWorkflowsResponse>(
-    apiUrl(`/projects/${encodeURIComponent(projectId)}/workflows`, query ? { ...query } : undefined),
+    apiUrl(
+      `/projects/${encodeURIComponent(projectId)}/workflows`,
+      query ? { ...query } : undefined,
+    ),
     { method: "GET" },
-    { signal }
+    { signal },
   );
 }
 

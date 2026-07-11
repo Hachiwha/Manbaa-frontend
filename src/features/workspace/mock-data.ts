@@ -1,19 +1,65 @@
-import type { ChatMessage, FlowEdge, FlowNode, VersionEntry, WorkspaceSource } from "./types";
+import type {
+  ChatMessage,
+  FlowEdge,
+  FlowNode,
+  VersionEntry,
+  WorkspaceSource,
+} from "./types";
 import { mapAiWorkflowToReactFlow } from "./mapAiWorkflowToFlow";
 import { ACTIVE_AI_WORKFLOW_MOCK, AI_WORKFLOW_MOCKS } from "./mocks/registry";
 
 export { ACTIVE_AI_WORKFLOW_MOCK, AI_WORKFLOW_MOCKS } from "./mocks/registry";
 
 export const MOCK_SOURCES: WorkspaceSource[] = [
-  { id: "src_1", name: "Invoice-spec-v3.pdf", type: "pdf", size: "1.2 MB", status: "ready", included: true },
-  { id: "src_2", name: "ERP-fields-mapping.txt", type: "text", size: "12 KB", status: "ready", included: true },
-  { id: "src_3", name: "Sample-invoice-scan.png", type: "image", size: "780 KB", status: "ready", included: true },
-  { id: "src_4", name: "Approval-policy-2025.pdf", type: "pdf", size: "640 KB", status: "ready", included: false },
-  { id: "src_5", name: "Edge-cases.docx", type: "doc", size: "88 KB", status: "preprocessing", included: false },
+  {
+    id: "src_1",
+    name: "Invoice-spec-v3.pdf",
+    type: "pdf",
+    size: "1.2 MB",
+    status: "ready",
+    included: true,
+  },
+  {
+    id: "src_2",
+    name: "ERP-fields-mapping.txt",
+    type: "text",
+    size: "12 KB",
+    status: "ready",
+    included: true,
+  },
+  {
+    id: "src_3",
+    name: "Sample-invoice-scan.png",
+    type: "image",
+    size: "780 KB",
+    status: "ready",
+    included: true,
+  },
+  {
+    id: "src_4",
+    name: "Approval-policy-2025.pdf",
+    type: "pdf",
+    size: "640 KB",
+    status: "ready",
+    included: false,
+  },
+  {
+    id: "src_5",
+    name: "Edge-cases.docx",
+    type: "doc",
+    size: "88 KB",
+    status: "preprocessing",
+    included: false,
+  },
 ];
 
 export const MOCK_VERSIONS: VersionEntry[] = [
-  { id: "v_24", label: "Version 2.4", timestamp: "Today, 10:45 AM", active: true },
+  {
+    id: "v_24",
+    label: "Version 2.4",
+    timestamp: "Today, 10:45 AM",
+    active: true,
+  },
   { id: "v_23", label: "Version 2.3", timestamp: "Today, 09:12 AM" },
   { id: "v_22", label: "Version 2.2", timestamp: "Yesterday, 18:04" },
   { id: "v_21", label: "Version 2.1", timestamp: "Yesterday, 14:30" },
@@ -62,7 +108,8 @@ export const MOCK_MESSAGES: ChatMessage[] = [
 ];
 
 /** Active fixture from `mocks/registry.ts` (`ACTIVE_AI_WORKFLOW_MOCK`). */
-export const MOCK_AI_WORKFLOW_RESPONSE = AI_WORKFLOW_MOCKS[ACTIVE_AI_WORKFLOW_MOCK];
+export const MOCK_AI_WORKFLOW_RESPONSE =
+  AI_WORKFLOW_MOCKS[ACTIVE_AI_WORKFLOW_MOCK];
 
 const mappedAiFlow = mapAiWorkflowToReactFlow(MOCK_AI_WORKFLOW_RESPONSE);
 

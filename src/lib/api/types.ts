@@ -122,7 +122,11 @@ export type SessionStatus =
   | "EXPORTED"
   | "NEEDS_RECONCILIATION";
 
-export type PipelineAgent = "EXTRACTION" | "PATTERN" | "VALIDATION" | "RECONCILIATION";
+export type PipelineAgent =
+  | "EXTRACTION"
+  | "PATTERN"
+  | "VALIDATION"
+  | "RECONCILIATION";
 
 export interface MessageMetadata {
   confidence_score?: number;
@@ -175,7 +179,13 @@ export interface PipelineProgress {
 
 /* ---------- Module 6 — Workflows ---------- */
 
-export type WorkflowStatus = "DRAFT" | "IN_ELICITATION" | "PENDING_REVIEW" | "VALIDATED" | "EXPORTED" | "ARCHIVED";
+export type WorkflowStatus =
+  | "DRAFT"
+  | "IN_ELICITATION"
+  | "PENDING_REVIEW"
+  | "VALIDATED"
+  | "EXPORTED"
+  | "ARCHIVED";
 
 export interface WorkflowElements {
   actors: unknown[];
@@ -306,7 +316,12 @@ export interface DecisionLogResponse {
 
 /* ---------- Module 7 — Comments & Review ---------- */
 
-export type CommentType = "question" | "correction" | "approval" | "suggestion" | "escalation";
+export type CommentType =
+  | "question"
+  | "correction"
+  | "approval"
+  | "suggestion"
+  | "escalation";
 
 export interface CommentAuthor {
   id: UUID;
@@ -397,7 +412,12 @@ export interface ApproveAllElementsResponse {
 
 /* ---------- Organizations ---------- */
 
-export type OrganizationRole = "admin" | "process_owner" | "business_analyst" | "reviewer" | "viewer";
+export type OrganizationRole =
+  | "admin"
+  | "process_owner"
+  | "business_analyst"
+  | "reviewer"
+  | "viewer";
 
 export interface InviteUserBody {
   email: string;
@@ -656,7 +676,9 @@ export interface CreateWorkflowBody {
   tags?: string[];
 }
 
-export type PatchWorkflowBody = Partial<Pick<Workflow, "title" | "description" | "domain" | "tags">>;
+export type PatchWorkflowBody = Partial<
+  Pick<Workflow, "title" | "description" | "domain" | "tags">
+>;
 
 export interface CreateCommentBody {
   type: CommentType;
@@ -691,7 +713,9 @@ export interface CreateRuleBody {
   priority: number;
 }
 
-export type PatchRuleBody = Partial<Pick<Rule, "instruction" | "priority" | "name">>;
+export type PatchRuleBody = Partial<
+  Pick<Rule, "instruction" | "priority" | "name">
+>;
 
 export interface RulesPreviewBody {
   session_id: UUID;

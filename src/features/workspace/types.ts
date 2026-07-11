@@ -6,16 +6,16 @@ export interface WorkspaceSource {
   name: string;
   type: SourceType;
   size: string;
-  status: "ready" | "preprocessing" | "uploading";
+  status: "ready" | "preprocessing" | "uploading" | "failed";
   included: boolean;
 }
 
 export type ChatRole = "ai" | "user" | "system";
 export type ChatKind =
   | "text"
-  | "summary"   // AI step list
-  | "update"    // AI text + confidence badge
-  | "status"    // system note
+  | "summary" // AI step list
+  | "update" // AI text + confidence badge
+  | "status" // system note
   | "node-attachment"; // node attachment
 export interface ChatMessage {
   id: string;
@@ -38,15 +38,20 @@ export interface VersionEntry {
 export interface FlowStepData {
   title: string;
   subtitle: string;
-  icon: string;          // lucide icon name key
-  confidence?: number;   // 0..1
+  icon: string; // lucide icon name key
+  confidence?: number; // 0..1
   active?: boolean;
   inferred?: boolean;
   subItems?: string[];
 }
 
 /** Data for AI-generated React Flow nodes (`mapAiWorkflowToFlow`). */
-export type RfFlowNodeKind = "rfStart" | "rfEnd" | "rfTask" | "rfDecision" | "rfStub";
+export type RfFlowNodeKind =
+  | "rfStart"
+  | "rfEnd"
+  | "rfTask"
+  | "rfDecision"
+  | "rfStub";
 
 export interface RfFlowNodeData {
   kind: RfFlowNodeKind;
@@ -59,8 +64,14 @@ export interface RfFlowNodeData {
   outcomeHandles?: { id: string; label: string }[];
 }
 
-export function isRfFlowNodeData(data: FlowStepData | RfFlowNodeData): data is RfFlowNodeData {
-  return "kind" in data && typeof (data as RfFlowNodeData).kind === "string" && (data as RfFlowNodeData).kind.startsWith("rf");
+export function isRfFlowNodeData(
+  data: FlowStepData | RfFlowNodeData,
+): data is RfFlowNodeData {
+  return (
+    "kind" in data &&
+    typeof (data as RfFlowNodeData).kind === "string" &&
+    (data as RfFlowNodeData).kind.startsWith("rf")
+  );
 }
 
 export type FlowNode = Node<FlowStepData | RfFlowNodeData>;

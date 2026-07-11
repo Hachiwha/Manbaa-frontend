@@ -71,7 +71,8 @@ export const MOCK_PROJECTS: Project[] = [
   {
     id: "proj_finance",
     name: "Finance & Billing",
-    description: "Invoice pipelines, procurement approvals, and ERP-aligned automations.",
+    description:
+      "Invoice pipelines, procurement approvals, and ERP-aligned automations.",
     updatedAt: maxIso([WORKFLOW_SEED[0].updatedAt, WORKFLOW_SEED[4].updatedAt]),
     coverGradient:
       "linear-gradient(135deg, oklch(0.38 0.14 265), oklch(0.52 0.20 300))",
@@ -80,7 +81,8 @@ export const MOCK_PROJECTS: Project[] = [
   {
     id: "proj_customer",
     name: "Customer Experience",
-    description: "Onboarding, support triage, and lifecycle workflows tied to CRM data.",
+    description:
+      "Onboarding, support triage, and lifecycle workflows tied to CRM data.",
     updatedAt: maxIso([WORKFLOW_SEED[1].updatedAt, WORKFLOW_SEED[3].updatedAt]),
     coverGradient:
       "linear-gradient(135deg, oklch(0.36 0.12 220), oklch(0.50 0.18 200))",
@@ -89,7 +91,8 @@ export const MOCK_PROJECTS: Project[] = [
   {
     id: "proj_legal",
     name: "Legal & Compliance",
-    description: "Contract review, policy alignment, and audit-friendly decision logs.",
+    description:
+      "Contract review, policy alignment, and audit-friendly decision logs.",
     updatedAt: WORKFLOW_SEED[2].updatedAt,
     coverGradient:
       "linear-gradient(135deg, oklch(0.34 0.10 195), oklch(0.48 0.16 265))",
@@ -98,11 +101,33 @@ export const MOCK_PROJECTS: Project[] = [
 ];
 
 /** All workflows (flattened from projects) — used by workspace and legacy lookups. */
-export const MOCK_WORKFLOWS: Workflow[] = MOCK_PROJECTS.flatMap((p) => p.workflows);
+export const MOCK_WORKFLOWS: Workflow[] = MOCK_PROJECTS.flatMap(
+  (p) => p.workflows,
+);
 
 export const MOCK_STATS: DashboardStat[] = [
-  { label: "Total projects", value: String(MOCK_PROJECTS.length), delta: "+1", deltaTone: "positive" },
-  { label: "Workflows executed", value: "4 921", delta: "Steady", deltaTone: "neutral" },
-  { label: "Success rate", value: "99.9%", delta: "+0.4 pts", deltaTone: "positive" },
-  { label: "Recent activity", value: "2 min ago", delta: "Active", deltaTone: "info" },
+  {
+    label: "Total projects",
+    value: String(MOCK_PROJECTS.length),
+    delta: "+1",
+    deltaTone: "positive",
+  },
+  {
+    label: "Workflows executed",
+    value: "4 921",
+    delta: "Steady",
+    deltaTone: "neutral",
+  },
+  {
+    label: "Success rate",
+    value: "99.9%",
+    delta: "+0.4 pts",
+    deltaTone: "positive",
+  },
+  {
+    label: "Recent activity",
+    value: "2 min ago",
+    delta: "Active",
+    deltaTone: "info",
+  },
 ];

@@ -25,10 +25,29 @@ const ICONS: Record<string, LucideIcon> = {
 };
 
 function confidenceTone(c?: number) {
-  if (c == null) return { ring: "border-border", dot: "bg-muted-foreground", text: "text-muted-foreground" };
-  if (c >= 0.85) return { ring: "border-success/50", dot: "bg-success", text: "text-success" };
-  if (c >= 0.6) return { ring: "border-warning/50", dot: "bg-warning", text: "text-warning" };
-  return { ring: "border-destructive/60", dot: "bg-destructive", text: "text-destructive" };
+  if (c == null)
+    return {
+      ring: "border-border",
+      dot: "bg-muted-foreground",
+      text: "text-muted-foreground",
+    };
+  if (c >= 0.85)
+    return {
+      ring: "border-success/50",
+      dot: "bg-success",
+      text: "text-success",
+    };
+  if (c >= 0.6)
+    return {
+      ring: "border-warning/50",
+      dot: "bg-warning",
+      text: "text-warning",
+    };
+  return {
+    ring: "border-destructive/60",
+    dot: "bg-destructive",
+    text: "text-destructive",
+  };
 }
 
 export const StepNode = memo(({ data, selected }: NodeProps<FlowStepData>) => {
@@ -59,16 +78,23 @@ export const StepNode = memo(({ data, selected }: NodeProps<FlowStepData>) => {
       <div className="flex items-start gap-3 p-3.5">
         <div
           className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
-            data.active ? "bg-primary text-primary-foreground" : "bg-surface-2 text-primary"
+            data.active
+              ? "bg-primary text-primary-foreground"
+              : "bg-surface-2 text-primary"
           }`}
         >
           <Icon className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <h4 className="truncate text-sm font-semibold text-foreground">{data.title}</h4>
+            <h4 className="truncate text-sm font-semibold text-foreground">
+              {data.title}
+            </h4>
             {data.inferred && (
-              <span title="Inferred by AI" className="grid h-4 w-4 place-items-center rounded-full bg-warning/20 text-warning">
+              <span
+                title="Inferred by AI"
+                className="grid h-4 w-4 place-items-center rounded-full bg-warning/20 text-warning"
+              >
                 <AlertTriangle className="h-2.5 w-2.5" />
               </span>
             )}
@@ -83,7 +109,10 @@ export const StepNode = memo(({ data, selected }: NodeProps<FlowStepData>) => {
         <div className="border-t border-border bg-surface/40 px-3.5 py-2">
           <ul className="space-y-1">
             {data.subItems.map((s) => (
-              <li key={s} className="flex items-center gap-1.5 text-[11.5px] text-foreground/85">
+              <li
+                key={s}
+                className="flex items-center gap-1.5 text-[11.5px] text-foreground/85"
+              >
                 <CheckCircle2 className="h-3 w-3 text-primary" />
                 {s}
               </li>
@@ -97,7 +126,9 @@ export const StepNode = memo(({ data, selected }: NodeProps<FlowStepData>) => {
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
             Confidence
           </span>
-          <span className={`flex items-center gap-1 text-[11px] font-semibold ${tone.text}`}>
+          <span
+            className={`flex items-center gap-1 text-[11px] font-semibold ${tone.text}`}
+          >
             <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
             {Math.round(data.confidence * 100)}%
           </span>

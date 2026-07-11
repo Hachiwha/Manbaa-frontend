@@ -57,6 +57,7 @@ paths:
 ## Responsive
 
 Vérifier chaque page sur :
+
 - mobile (< 640px)
 - tablet (640px–1024px)
 - desktop (> 1024px)

@@ -42,7 +42,7 @@ export function getDocument(documentId: string, signal?: AbortSignal) {
   return apiClient<DocumentResponseDto>(
     apiUrl(`/documents/${encodeURIComponent(documentId)}`),
     { method: "GET" },
-    { signal }
+    { signal },
   );
 }
 
@@ -59,12 +59,15 @@ export function deleteDocument(documentId: string, signal?: AbortSignal) {
 export function listWorkflowDocuments(
   workflowId: string,
   query?: { cursor?: string; limit?: number },
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ) {
   return apiClient<DocumentResponseDto[]>(
-    apiUrl(`/workflows/${encodeURIComponent(workflowId)}/documents`, query ? { ...query } : undefined),
+    apiUrl(
+      `/workflows/${encodeURIComponent(workflowId)}/documents`,
+      query ? { ...query } : undefined,
+    ),
     { method: "GET" },
-    { signal }
+    { signal },
   );
 }
 
@@ -73,16 +76,19 @@ export function reprocessDocument(documentId: string, signal?: AbortSignal) {
   return apiClient<DocumentResponseDto>(
     apiUrl(`/documents/${encodeURIComponent(documentId)}/reprocess`),
     { method: "POST" },
-    { signal }
+    { signal },
   );
 }
 
 /** `GET /documents/:id/extracted-text` */
-export function getDocumentExtractedText(documentId: string, signal?: AbortSignal) {
+export function getDocumentExtractedText(
+  documentId: string,
+  signal?: AbortSignal,
+) {
   return apiClient<DocumentExtractedText>(
     apiUrl(`/documents/${encodeURIComponent(documentId)}/extracted-text`),
     { method: "GET" },
-    { signal }
+    { signal },
   );
 }
 
@@ -90,11 +96,11 @@ export function getDocumentExtractedText(documentId: string, signal?: AbortSigna
 export function updateDocumentExtractedText(
   documentId: string,
   body: UpdateExtractedTextBody,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ) {
   return apiClient<DocumentExtractedText>(
     apiUrl(`/documents/${encodeURIComponent(documentId)}/extracted-text`),
     { method: "PATCH", body: json(body) },
-    { signal }
+    { signal },
   );
 }

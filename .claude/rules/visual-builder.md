@@ -27,7 +27,7 @@ type NodeType =
   | "conceptCard"
   | "assetCard"
   | "brandDocumentNode"
-  | "groupNode"
+  | "groupNode";
 ```
 
 Pas d'assumptions BPMN dans le board. Les types liés aux workflows sont supprimés.

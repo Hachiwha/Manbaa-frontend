@@ -9,20 +9,27 @@ import type {
 } from "../types";
 
 /** `POST /org/invite` */
-export function inviteOrganizationUser(body: InviteUserBody, signal?: AbortSignal) {
+export function inviteOrganizationUser(
+  body: InviteUserBody,
+  signal?: AbortSignal,
+) {
   return apiClient<OrganizationMutationResponse>(
     apiUrl("/org/invite"),
     { method: "POST", body: json(body) },
-    { signal }
+    { signal },
   );
 }
 
 /** `PATCH /org/users/:id/role` */
-export function updateOrganizationUserRole(userId: string, body: UpdateUserRoleBody, signal?: AbortSignal) {
+export function updateOrganizationUserRole(
+  userId: string,
+  body: UpdateUserRoleBody,
+  signal?: AbortSignal,
+) {
   return apiClient<OrganizationMutationResponse>(
     apiUrl(`/org/users/${encodeURIComponent(userId)}/role`),
     { method: "PATCH", body: json(body) },
-    { signal }
+    { signal },
   );
 }
 

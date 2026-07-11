@@ -20,9 +20,16 @@ export interface ApiClientOptions<T> {
 export async function apiClient<T>(
   url: string,
   options: RequestInit,
-  config: ApiClientOptions<T> = {}
+  config: ApiClientOptions<T> = {},
 ): Promise<T> {
-  const { parseAs = "json", timeoutMs, withAuth, signal, schema, mapResponse } = config;
+  const {
+    parseAs = "json",
+    timeoutMs,
+    withAuth,
+    signal,
+    schema,
+    mapResponse,
+  } = config;
 
   if (parseAs !== "json") {
     return http<T>(url, {

@@ -3,7 +3,10 @@
  * Doc default: `https://api.yourbackend.com`
  */
 export const API_BASE_URL =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") ?? "http://localhost:3000";
+  (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(
+    /\/$/,
+    "",
+  ) ?? "http://localhost:3000";
 
 function normalizeApiPrefix(prefix: string): string {
   const trimmed = prefix.trim();
@@ -17,7 +20,7 @@ function normalizeApiPrefix(prefix: string): string {
  * Set `VITE_API_PREFIX` to "" when your backend is mounted at root.
  */
 export const API_PATH_PREFIX = normalizeApiPrefix(
-  (import.meta.env.VITE_API_PREFIX as string | undefined) ?? "/api"
+  (import.meta.env.VITE_API_PREFIX as string | undefined) ?? "/api",
 );
 
 const TOKEN_STORAGE_KEY = "flou2flow_api_token";

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TopBar } from "@/components/shell/TopBar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SourcesPanel } from "@/features/workspace/components/SourcesPanel";
+import { AiResultsPanel } from "@/features/workspace/components/AiResultsPanel";
 import { ChatFab } from "@/features/workspace/components/ChatFab";
 import { WorkflowPreview } from "@/features/workspace/components/WorkflowPreview";
 import { useWorkspaceRealtime } from "@/lib/realtime/useWorkspaceRealtime";
@@ -38,6 +39,7 @@ function WorkspacePage() {
   const [selectedNodeForChat, setSelectedNodeForChat] =
     useState<FlowNode | null>(null);
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [resultsOpen, setResultsOpen] = useState(false);
 
   const { data: sessionData } = useQuery({
     queryKey: ["session", sessionId],
@@ -216,6 +218,8 @@ function WorkspacePage() {
         }
         sourcesOpen={sourcesOpen}
         onToggleSources={() => setSourcesOpen((v) => !v)}
+        resultsOpen={resultsOpen}
+        onToggleResults={() => setResultsOpen((v) => !v)}
       />
       <div className="relative flex min-h-0 flex-1">
         {/* Sources is the only collapsible side panel - visible inline at
@@ -242,6 +246,11 @@ function WorkspacePage() {
           />
         </div>
 
+        {/* AI Results panel - visible inline at desktop, hidden below */}
+        <div className="hidden xl:block xl:shrink-0">
+          <AiResultsPanel />
+        </div>
+
         <ChatFab
           messages={messages}
           workflowTitle={workflowTitle}
@@ -251,6 +260,16 @@ function WorkspacePage() {
           onClearSelectedNode={() => setSelectedNodeForChat(null)}
         />
       </div>
+
+      {/* Mobile/tablet sheet for AI Results */}
+      <Sheet open={resultsOpen} onOpenChange={setResultsOpen}>
+        <SheetContent
+          side="right"
+          className="w-[85vw] max-w-sm p-0 sm:max-w-sm xl:hidden"
+        >
+          <AiResultsPanel className="w-full border-l-0" />
+        </SheetContent>
+      </Sheet>
 
       <Sheet open={sourcesOpen} onOpenChange={setSourcesOpen}>
         <SheetContent

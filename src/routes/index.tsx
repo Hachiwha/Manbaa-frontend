@@ -15,6 +15,7 @@ import {
   LayoutGrid,
   Rows3,
   FolderKanban,
+  Search,
   X,
 } from "lucide-react";
 import { TopBar } from "@/components/shell/TopBar";
@@ -232,12 +233,12 @@ function DashboardPage() {
                 ))}
               </div>
             ) : selectedProject && projectWorkflows.length === 0 ? (
-              <div className="mt-5 flex flex-col items-center gap-2 rounded-xl border border-dashed border-border-strong/60 bg-surface/30 px-6 py-10 text-center">
-                <FolderKanban className="h-5 w-5 text-muted-foreground" />
-                <p className="text-sm font-medium text-foreground">
+              <div className="mt-5 flex flex-col items-center gap-3 rounded-xl border border-dashed border-border-strong/60 bg-surface/30 px-6 py-12 text-center">
+                <FolderKanban className="h-16 w-16 text-ink-muted-48" />
+                <p className="text-[28px] font-semibold tracking-tight text-ink">
                   No brand projects yet
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-ink-muted-48">
                   Create one to get started in this project.
                 </p>
                 <button
@@ -249,12 +250,12 @@ function DashboardPage() {
                 </button>
               </div>
             ) : !selectedProject && projects.length === 0 ? (
-              <div className="mt-5 flex flex-col items-center gap-2 rounded-xl border border-dashed border-border-strong/60 bg-surface/30 px-6 py-10 text-center">
-                <FolderKanban className="h-5 w-5 text-muted-foreground" />
-                <p className="text-sm font-medium text-foreground">
-                  No projects yet
+              <div className="mt-5 flex flex-col items-center gap-3 rounded-xl border border-dashed border-border-strong/60 bg-surface/30 px-6 py-12 text-center">
+                <FolderKanban className="h-16 w-16 text-ink-muted-48" />
+                <p className="text-[28px] font-semibold tracking-tight text-ink">
+                  Start your first brand project
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-ink-muted-48">
                   Create your first project to organize brand work.
                 </p>
                 <button
@@ -460,43 +461,34 @@ function DashboardPage() {
 }
 
 function Hero({ onNewProject }: { onNewProject: () => void }) {
+  const [searchQuery, setSearchQuery] = useState("");
+
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border bg-surface px-6 py-7 md:px-9 md:py-9">
-      <div className="relative flex flex-col items-start justify-between gap-5 md:flex-row md:items-end">
-        <div className="max-w-2xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-            Manbaa · live
-          </span>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight md:text-[34px]">
-            Compose{" "}
-            <span className="text-primary">intelligent brand identities</span>
-            <br className="hidden md:block" />
-            from your sources, in minutes.
-          </h1>
-          <p className="mt-2.5 max-w-xl text-sm text-muted-foreground">
-            Manbaa ingests your sources, drafts a brand identity with AI, and
-            lets you refine it on the board — then exports a polished brand
-            document.
-          </p>
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h1 className="text-display-lg text-ink">Your Brand Projects</h1>
+        <p className="mt-2 text-body text-ink-muted-48">
+          Upload your materials, generate your visual identity
+        </p>
+      </div>
+      <div className="flex shrink-0 items-center gap-3">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-muted-48" />
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search projects"
+            className="h-11 w-56 rounded-pill border border-hairline bg-canvas pl-10 pr-4 text-body text-ink placeholder:text-ink-muted-48 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/10"
+          />
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            className="group inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3.5 py-2 text-sm font-medium text-foreground/90 transition-all active:scale-95 hover:border-border-strong hover:bg-surface-2"
-          >
-            Welcome to Manbaa
-            <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-          </button>
-          <button
-            type="button"
-            onClick={onNewProject}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3.5 py-2 text-sm font-semibold text-primary-foreground transition-all active:scale-95 hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" />
-            New project
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onNewProject}
+          className="inline-flex items-center gap-2 rounded-pill bg-primary px-5 py-2.5 text-body-strong text-primary-foreground transition-all active:scale-95 hover:bg-primary/90"
+        >
+          <Plus className="h-4 w-4" />
+          New Project
+        </button>
       </div>
     </div>
   );
@@ -632,32 +624,31 @@ function ProjectCard({
       transition={{ duration: 0.3, delay }}
       whileHover={{ y: -3 }}
     >
-      <button
-        type="button"
-        onClick={onOpen}
-        className="group block w-full overflow-hidden rounded-xl border border-border bg-card text-left transition-all active:scale-[0.99] hover:border-border-strong hover:shadow-[var(--shadow-hairline)]"
-      >
-        <div className="relative flex h-28 w-full items-center justify-center bg-surface-2">
-          <FolderKanban className="h-7 w-7 text-muted-foreground" aria-hidden />
-          <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded-full border border-border-strong/60 bg-background/70 px-2 py-0.5 text-[10px] font-semibold text-foreground">
-            <FolderKanban className="h-3 w-3" />
-            brand projects
-          </span>
-        </div>
-
-        <div className="p-4">
-          <h3 className="line-clamp-1 text-[14.5px] font-semibold tracking-tight text-foreground">
-            {project.name}
-          </h3>
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-[10.5px] text-muted-foreground">Project</span>
-            <span className="flex items-center gap-1 text-[10.5px] text-muted-foreground">
-              <Activity className="h-3 w-3" />
-              {timeAgo(project.updatedAt)}
+      <div className="group block w-full overflow-hidden rounded-xl border border-border bg-card text-left transition-all active:scale-[0.99] hover:border-primary">
+        <div className="h-1 w-full bg-primary" />
+        <button type="button" onClick={onOpen} className="block w-full text-left">
+          <div className="relative flex h-28 w-full items-center justify-center bg-surface-2">
+            <FolderKanban className="h-7 w-7 text-muted-foreground" aria-hidden />
+            <span className="absolute right-2.5 top-2.5 inline-flex items-center gap-1 rounded-full border border-border-strong/60 bg-background/70 px-2 py-0.5 text-[10px] font-semibold text-foreground">
+              <FolderKanban className="h-3 w-3" />
+              brand projects
             </span>
           </div>
-        </div>
-      </button>
+
+          <div className="p-4">
+            <h3 className="line-clamp-1 text-[17px] font-semibold tracking-tight text-ink">
+              {project.name}
+            </h3>
+            <div className="mt-3 flex items-center justify-between">
+              <span className="text-[12px] text-ink-muted-48">Project</span>
+              <span className="flex items-center gap-1 text-[12px] text-ink-muted-48">
+                <Activity className="h-3 w-3" />
+                {timeAgo(project.updatedAt)}
+              </span>
+            </div>
+          </div>
+        </button>
+      </div>
     </motion.div>
   );
 }

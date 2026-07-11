@@ -19,8 +19,14 @@ import {
   ToggleLeft,
   ToggleRight,
   Trash2,
+  Copy,
+  Plus,
 } from "lucide-react";
-import { createSessionMessage, finalizeSession, patchSessionMode } from "@/lib/api";
+import {
+  createSessionMessage,
+  finalizeSession,
+  patchSessionMode,
+} from "@/lib/api";
 import { NodeAttachment } from "./NodeAttachment";
 import type { ChatMessage, FlowNode } from "../types";
 import { cn } from "@/lib/utils";
@@ -38,15 +44,17 @@ interface ChatPanelProps {
   sessionId?: string;
   selectedNodeForChat?: FlowNode | null;
   onClearSelectedNode?: () => void;
+  onClose?: () => void;
 }
 
-export function ChatPanel({ 
-  messages: initial, 
-  workflowTitle, 
+export function ChatPanel({
+  messages: initial,
+  workflowTitle,
   mode = "INTERACTIVE",
   sessionId,
   selectedNodeForChat,
   onClearSelectedNode,
+  onClose,
 }: ChatPanelProps) {
   const queryClient = useQueryClient();
   const [messages, setMessages] = useState<ChatMessage[]>(initial);
@@ -59,23 +67,35 @@ export function ChatPanel({
   const [sending, setSending] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [rules, setRules] = useState<Rule[]>([
-    { id: "1", text: "Always use system tasks for automated steps", active: true },
+    {
+      id: "1",
+      text: "Always use system tasks for automated steps",
+      active: true,
+    },
     { id: "2", text: "Keep descriptions under 100 characters", active: false },
   ]);
   const [newRule, setNewRule] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
 
   const sendMessageMutation = useMutation({
-    mutationFn: ({ sessionId: sid, content }: { sessionId: string; content: string }) =>
-      createSessionMessage(sid, { 
-        role: "user", 
-        type: "user_input", 
+    mutationFn: ({
+      sessionId: sid,
+      content,
+    }: {
+      sessionId: string;
+      content: string;
+    }) =>
+      createSessionMessage(sid, {
+        role: "user",
+        type: "user_input",
         content,
       }),
     onSuccess: (newMessage) => {
-      // Server response handles normal texts. 
+      // Server response handles normal texts.
       // If we had a node attachment, it would be in localMessages or sent differently, but for now we'll just invalidate.
-      queryClient.invalidateQueries({ queryKey: ["session-messages", sessionId] });
+      queryClient.invalidateQueries({
+        queryKey: ["session-messages", sessionId],
+      });
     },
     onError: () => {
       setSending(false);
@@ -90,8 +110,13 @@ export function ChatPanel({
   });
 
   const modeMutation = useMutation({
-    mutationFn: ({ sid, mode: newMode }: { sid: string; mode: "auto" | "interactive" }) =>
-      patchSessionMode(sid, { mode: newMode }),
+    mutationFn: ({
+      sid,
+      mode: newMode,
+    }: {
+      sid: string;
+      mode: "auto" | "interactive";
+    }) => patchSessionMode(sid, { mode: newMode }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
     },
@@ -109,7 +134,10 @@ export function ChatPanel({
           id: `node-${selectedNodeForChat.id}-${Date.now()}`,
           role: "user",
           kind: "node-attachment",
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
           nodeAttachment: selectedNodeForChat,
         },
       ]);
@@ -128,14 +156,14 @@ export function ChatPanel({
 
     setSending(true);
     setDraft("");
-    
+
     sendMessageMutation.mutate(
       { sessionId, content: text },
       {
         onSettled: () => {
           setSending(false);
         },
-      }
+      },
     );
   }, [draft, sending, sessionId, sendMessageMutation]);
 
@@ -154,7 +182,10 @@ export function ChatPanel({
 
   const addRule = () => {
     if (!newRule.trim()) return;
-    setRules([...rules, { id: Date.now().toString(), text: newRule, active: true }]);
+    setRules([
+      ...rules,
+      { id: Date.now().toString(), text: newRule, active: true },
+    ]);
     setNewRule("");
   };
 
@@ -198,19 +229,27 @@ export function ChatPanel({
                       "group relative flex flex-col gap-2 rounded-xl border p-3 transition-colors",
                       rule.active
                         ? "border-primary/30 bg-primary/5"
-                        : "border-border bg-surface/50 opacity-60"
+                        : "border-border bg-surface/50 opacity-60",
                     )}
                   >
                     <div className="flex items-start justify-between gap-2">
-                      <p className="text-[12.5px] font-medium leading-snug">{rule.text}</p>
+                      <p className="text-[12.5px] font-medium leading-snug">
+                        {rule.text}
+                      </p>
                       <button
                         onClick={() => toggleRule(rule.id)}
                         className={cn(
                           "shrink-0 transition-colors active:scale-90",
-                          rule.active ? "text-primary" : "text-muted-foreground"
+                          rule.active
+                            ? "text-primary"
+                            : "text-muted-foreground",
                         )}
                       >
-                        {rule.active ? <ToggleRight className="h-5 w-5" /> : <ToggleLeft className="h-5 w-5" />}
+                        {rule.active ? (
+                          <ToggleRight className="h-5 w-5" />
+                        ) : (
+                          <ToggleLeft className="h-5 w-5" />
+                        )}
                       </button>
                     </div>
                     <div className="flex items-center justify-end">
@@ -251,28 +290,24 @@ export function ChatPanel({
         )}
       </AnimatePresence>
       {/* Chat header */}
-      <div className="flex h-12 shrink-0 items-center justify-between border-b border-border px-5">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Chat
-          </span>
-          <span className="truncate text-sm font-medium text-foreground/90">{workflowTitle}</span>
-        </div>
+      <div className="flex h-12 shrink-0 items-center justify-between bg-surface-black px-4">
+        <span className="text-caption-strong text-body-on-dark">Manbaa AI</span>
         <div className="flex items-center gap-2">
-          <ModeBadge mode={mode} />
-          <button 
-            onClick={() => setShowRules(true)}
-            className={cn(
-              "grid h-7 w-7 place-items-center rounded-md transition-colors active:scale-90",
-              showRules ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-surface hover:text-foreground"
-            )}
-            title="AI Rules"
-          >
-            <Settings2 className="h-4 w-4" />
-          </button>
-          <button className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors active:scale-90 hover:bg-surface hover:text-foreground">
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+          <div className="hidden items-center gap-1 sm:flex">
+            <span className="rounded-pill bg-white/15 px-2.5 py-0.5 text-fine-print font-medium text-body-on-dark">Workspace</span>
+            <span className="rounded-pill px-2.5 py-0.5 text-fine-print text-body-muted">Selection</span>
+            <span className="rounded-pill px-2.5 py-0.5 text-fine-print text-body-muted">General</span>
+          </div>
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close chat"
+              className="ml-2 grid h-7 w-7 place-items-center rounded-md text-body-muted transition-colors active:scale-90 hover:bg-white/10 hover:text-body-on-dark"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -295,7 +330,11 @@ export function ChatPanel({
       {/* Quick actions strip */}
       <div className="mx-auto mb-2 flex w-full max-w-3xl items-center gap-2 px-6 overflow-x-auto scrollbar-none">
         <QuickPill icon={Wand2} label="Export to Elsa" />
-        <QuickPill icon={Settings2} label="AI Rules" onClick={() => setShowRules(true)} />
+        <QuickPill
+          icon={Settings2}
+          label="AI Rules"
+          onClick={() => setShowRules(true)}
+        />
         <QuickPill icon={Database} label="Change model" />
         <QuickPill icon={Tag} label="Add metadata" />
       </div>
@@ -333,7 +372,8 @@ export function ChatPanel({
           </button>
         </div>
         <p className="mt-2 text-center text-[10px] text-muted-foreground">
-          Manbaa can be inaccurate; please double-check generated steps before exporting.
+          Manbaa can be inaccurate; please double-check generated steps before
+          exporting.
         </p>
       </div>
     </section>
@@ -350,15 +390,25 @@ function ModeBadge({ mode }: { mode: "AUTO" | "INTERACTIVE" }) {
           : "border-primary/40 bg-primary/10 text-primary"
       }`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${isAuto ? "bg-accent" : "bg-primary"}`} />
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${isAuto ? "bg-accent" : "bg-primary"}`}
+      />
       {mode}
     </span>
   );
 }
 
-function QuickPill({ icon: Icon, label, onClick }: { icon: any; label: string; onClick?: () => void }) {
+function QuickPill({
+  icon: Icon,
+  label,
+  onClick,
+}: {
+  icon: any;
+  label: string;
+  onClick?: () => void;
+}) {
   return (
-    <button 
+    <button
       onClick={onClick}
       className="flex items-center gap-1.5 shrink-0 rounded-full border border-border bg-surface px-3 py-1 text-[11px] text-muted-foreground transition-colors active:scale-95 hover:border-border-strong hover:bg-surface-2 hover:text-foreground"
     >
@@ -367,7 +417,6 @@ function QuickPill({ icon: Icon, label, onClick }: { icon: any; label: string; o
     </button>
   );
 }
-
 
 function MessageBubble({ message }: { message: ChatMessage }) {
   if (message.role === "system") {
@@ -400,9 +449,15 @@ function MessageBubble({ message }: { message: ChatMessage }) {
               : "bg-surface-2 text-primary"
           }`}
         >
-          {isUser ? <span className="text-[10px] font-bold">MA</span> : <Bot className="h-4 w-4" />}
+          {isUser ? (
+            <span className="text-[10px] font-bold">MA</span>
+          ) : (
+            <Bot className="h-4 w-4" />
+          )}
         </div>
-        <div className={`flex max-w-[80%] flex-col gap-1.5 ${isUser ? "items-end" : "items-start"}`}>
+        <div
+          className={`flex max-w-[80%] flex-col gap-1.5 ${isUser ? "items-end" : "items-start"}`}
+        >
           <NodeAttachment node={message.nodeAttachment} />
           <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
             <span>{message.timestamp}</span>
@@ -426,10 +481,16 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             : "bg-surface-2 text-primary"
         }`}
       >
-        {isUser ? <span className="text-[10px] font-bold">MA</span> : <Bot className="h-4 w-4" />}
+        {isUser ? (
+          <span className="text-[10px] font-bold">MA</span>
+        ) : (
+          <Bot className="h-4 w-4" />
+        )}
       </div>
 
-      <div className={`flex max-w-[80%] flex-col gap-1.5 ${isUser ? "items-end" : "items-start"}`}>
+      <div
+        className={`flex max-w-[80%] flex-col gap-1.5 ${isUser ? "items-end" : "items-start"}`}
+      >
         <div
           className={`rounded-2xl border px-4 py-3 text-[13.5px] leading-relaxed ${
             isUser
@@ -437,12 +498,17 @@ function MessageBubble({ message }: { message: ChatMessage }) {
               : "border-border bg-surface text-foreground/95"
           }`}
         >
-          {message.content && <p className="whitespace-pre-wrap">{message.content}</p>}
+          {message.content && (
+            <p className="whitespace-pre-wrap">{message.content}</p>
+          )}
 
           {message.kind === "summary" && message.steps && (
             <ul className="mt-3 space-y-1.5 border-t border-border pt-3">
               {message.steps.map((s) => (
-                <li key={s.label} className="flex items-center gap-2 text-[12.5px]">
+                <li
+                  key={s.label}
+                  className="flex items-center gap-2 text-[12.5px]"
+                >
                   {s.status === "done" && (
                     <span className="grid h-4 w-4 place-items-center rounded-full bg-success/20 text-success">
                       <Check className="h-3 w-3" strokeWidth={3} />
@@ -456,7 +522,9 @@ function MessageBubble({ message }: { message: ChatMessage }) {
                   )}
                   <span
                     className={
-                      s.status === "pending" ? "text-muted-foreground" : "text-foreground"
+                      s.status === "pending"
+                        ? "text-muted-foreground"
+                        : "text-foreground"
                     }
                   >
                     {s.label}

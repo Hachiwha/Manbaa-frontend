@@ -11,10 +11,10 @@ export const ACCEPTED_SOURCE_MIME_TYPES = [
   "text/plain",
   "text/markdown",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "audio/mpeg",   // mp3
-  "audio/wav",    // wav
-  "audio/x-wav",  // fallback wav
-  "audio/mp4",    // m4a (souvent utilisé)
+  "audio/mpeg", // mp3
+  "audio/wav", // wav
+  "audio/x-wav", // fallback wav
+  "audio/mp4", // m4a (souvent utilisé)
   "audio/x-matroska", // mkv (audio/video container)
 ] as const;
 
@@ -33,34 +33,32 @@ export const ACCEPT_ATTRIBUTE = [
 export function mimeToWorkspaceSourceType(mime: string): SourceType | null {
   if (mime === "application/pdf") return "pdf";
 
-  if (
-    mime === "image/png" ||
-    mime === "image/jpeg" ||
-    mime === "image/webp"
-  ) return "image";
+  if (mime === "image/png" || mime === "image/jpeg" || mime === "image/webp")
+    return "image";
+
+  if (mime === "text/plain" || mime === "text/markdown") return "text";
 
   if (
-    mime === "text/plain" ||
-    mime === "text/markdown"
-  ) return "text";
-
-  if (
-    mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  ) return "doc";
+    mime ===
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  )
+    return "doc";
 
   // 👇 NOUVEAU
   if (
     mime.startsWith("audio/") ||
-    mime === "video/x-matroska" ||   // mkv fallback
+    mime === "video/x-matroska" || // mkv fallback
     mime === "audio/x-matroska"
-  ) return "audio";
+  )
+    return "audio";
 
   return null;
 }
 
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(bytes < 10_240 ? 1 : 0)} KB`;
+  if (bytes < 1024 * 1024)
+    return `${(bytes / 1024).toFixed(bytes < 10_240 ? 1 : 0)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 

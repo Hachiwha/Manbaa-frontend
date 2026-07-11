@@ -1,5 +1,8 @@
 import type { Edge, Node } from "reactflow";
-import type { AiWorkflowDecision, AiWorkflowResponse } from "./aiWorkflow.types";
+import type {
+  AiWorkflowDecision,
+  AiWorkflowResponse,
+} from "./aiWorkflow.types";
 import type { RfFlowNodeData } from "./types";
 
 const RF_START_ID = "__rf_start__";
@@ -24,7 +27,9 @@ function collectGraphNodeIds(flow: AiWorkflowResponse["flow"]): Set<string> {
   return ids;
 }
 
-function buildOutgoingMap(connections: AiWorkflowResponse["flow"]["connections"]) {
+function buildOutgoingMap(
+  connections: AiWorkflowResponse["flow"]["connections"],
+) {
   const map = new Map<string, { to_id: string; condition?: string | null }[]>();
   for (const c of connections ?? []) {
     const list = map.get(c.from_id) ?? [];
@@ -50,7 +55,7 @@ function computeLayers(
   while (queue.length) {
     const id = queue.shift()!;
     const L = layer.get(id) ?? 0;
-    
+
     const count = (updates.get(id) ?? 0) + 1;
     updates.set(id, count);
     if (count > MAX_UPDATES) continue; // Safety break for cycles
@@ -59,7 +64,7 @@ function computeLayers(
       if (!allIds.has(to_id)) continue;
       const nextL = L + 1;
       const currentL = layer.get(to_id);
-      
+
       if (currentL === undefined || currentL < nextL) {
         layer.set(to_id, nextL);
         queue.push(to_id);
@@ -71,7 +76,6 @@ function computeLayers(
   }
   return layer;
 }
-
 
 function layoutPositions(
   allIds: Set<string>,
@@ -98,7 +102,11 @@ function layoutPositions(
 }
 
 /** Topological-ish column order: BFS from start_event. */
-function bfsOrder(startId: string, outgoing: Map<string, { to_id: string }[]>, allIds: Set<string>): string[] {
+function bfsOrder(
+  startId: string,
+  outgoing: Map<string, { to_id: string }[]>,
+  allIds: Set<string>,
+): string[] {
   const order: string[] = [];
   const seen = new Set<string>();
   const q = [startId];
@@ -117,7 +125,10 @@ function bfsOrder(startId: string, outgoing: Map<string, { to_id: string }[]>, a
   return order;
 }
 
-function decisionHandleId(decision: AiWorkflowDecision | undefined, conditionLabel: string | null | undefined) {
+function decisionHandleId(
+  decision: AiWorkflowDecision | undefined,
+  conditionLabel: string | null | undefined,
+) {
   if (!decision?.conditions?.length) return undefined;
   const idx = decision.conditions.findIndex((c) => c.label === conditionLabel);
   const i = idx >= 0 ? idx : 0;
@@ -207,7 +218,9 @@ export function mapAiWorkflowToReactFlow(response: AiWorkflowResponse): {
         data: {
           kind: isDeclaredEnd ? "rfEnd" : "rfStub",
           title: humanizeId(id),
-          subtitle: isDeclaredEnd ? "End of path" : "Referenced in flow (add to tasks/decisions for full detail)",
+          subtitle: isDeclaredEnd
+            ? "End of path"
+            : "Referenced in flow (add to tasks/decisions for full detail)",
           variant: isDeclaredEnd ? "end" : "stub",
         },
         connectable: false,

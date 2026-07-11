@@ -56,7 +56,7 @@ export function ChatFab(props: ChatFabProps) {
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
           side="right"
-          className="flex w-[92vw] max-w-md flex-col p-0 sm:max-w-md lg:max-w-lg"
+          className="flex w-full max-w-md flex-col p-0 sm:max-w-md"
         >
           <SheetTitle className="sr-only">Chat</SheetTitle>
           <ChatPanel
@@ -66,6 +66,7 @@ export function ChatFab(props: ChatFabProps) {
             sessionId={props.sessionId}
             selectedNodeForChat={props.selectedNodeForChat}
             onClearSelectedNode={props.onClearSelectedNode}
+            onClose={() => setOpen(false)}
           />
         </SheetContent>
       </Sheet>

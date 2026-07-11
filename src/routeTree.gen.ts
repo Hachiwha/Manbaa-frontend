@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TestRouteImport } from './routes/test'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as WorkspaceSessionIdRouteImport } from './routes/workspace.$sessionId'
 import { Route as SharedTokenRouteImport } from './routes/shared.$token'
@@ -17,6 +19,16 @@ import { Route as SharedTokenRouteImport } from './routes/shared.$token'
 const TestRoute = TestRouteImport.update({
   id: '/test',
   path: '/test',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,12 +49,16 @@ const SharedTokenRoute = SharedTokenRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/test': typeof TestRoute
   '/shared/$token': typeof SharedTokenRoute
   '/workspace/$sessionId': typeof WorkspaceSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/test': typeof TestRoute
   '/shared/$token': typeof SharedTokenRoute
   '/workspace/$sessionId': typeof WorkspaceSessionIdRoute
@@ -50,20 +66,43 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/test': typeof TestRoute
   '/shared/$token': typeof SharedTokenRoute
   '/workspace/$sessionId': typeof WorkspaceSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/test' | '/shared/$token' | '/workspace/$sessionId'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/test'
+    | '/shared/$token'
+    | '/workspace/$sessionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/test' | '/shared/$token' | '/workspace/$sessionId'
-  id: '__root__' | '/' | '/test' | '/shared/$token' | '/workspace/$sessionId'
+  to:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/test'
+    | '/shared/$token'
+    | '/workspace/$sessionId'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/register'
+    | '/test'
+    | '/shared/$token'
+    | '/workspace/$sessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
   TestRoute: typeof TestRoute
   SharedTokenRoute: typeof SharedTokenRoute
   WorkspaceSessionIdRoute: typeof WorkspaceSessionIdRoute
@@ -76,6 +115,20 @@ declare module '@tanstack/react-router' {
       path: '/test'
       fullPath: '/test'
       preLoaderRoute: typeof TestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,6 +157,8 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
   TestRoute: TestRoute,
   SharedTokenRoute: SharedTokenRoute,
   WorkspaceSessionIdRoute: WorkspaceSessionIdRoute,

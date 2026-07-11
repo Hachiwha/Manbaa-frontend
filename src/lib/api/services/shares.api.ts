@@ -18,11 +18,11 @@ export interface ShareResponse {
 export function createWorkflowShare(
   workflowId: string,
   body: CreateShareBody = {},
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ) {
   return apiClient<ShareResponse>(
     apiUrl(`/workflows/${encodeURIComponent(workflowId)}/share`),
     { method: "POST", body: json(body) },
-    { signal }
+    { signal },
   );
 }

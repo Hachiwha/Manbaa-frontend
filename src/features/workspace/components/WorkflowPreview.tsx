@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import ReactFlow, {
   Background,
@@ -9,6 +9,7 @@ import ReactFlow, {
   type Node,
   type Edge,
   ReactFlowProvider,
+  useKeyPress,
 } from "reactflow";
 import { motion } from "framer-motion";
 import {
@@ -23,6 +24,17 @@ import {
   Check,
   Copy,
   Share2,
+  MousePointer2,
+  Hand,
+  StickyNote,
+  Type,
+  Shapes,
+  Square,
+  Undo2,
+  Redo2,
+  ZoomIn,
+  ZoomOut,
+  Sparkles,
 } from "lucide-react";
 import BpmnViewer from "bpmn-js/lib/NavigatedViewer";
 import { jsonToBpmn } from "@/lib/jsonToBpmn";
@@ -102,6 +114,15 @@ function minimapColor(node: Node) {
   return "var(--primary)";
 }
 
+const TOOLBAR_TOOLS = [
+  { id: "select", icon: MousePointer2, label: "Select" },
+  { id: "pan", icon: Hand, label: "Pan" },
+  { id: "note", icon: StickyNote, label: "Note" },
+  { id: "text", icon: Type, label: "Text" },
+  { id: "shape", icon: Square, label: "Shape" },
+  { id: "frame", icon: Square, label: "Frame" },
+] as const;
+
 function FlowDiagram({
   nodesWithSelection,
   styledEdges,
@@ -123,8 +144,99 @@ function FlowDiagram({
   ) => void;
   onChooseNodeInChat?: (node: FlowNode) => void;
 }) {
+  const [activeTool, setActiveTool] = useState("select");
+  const [zoomLevel, setZoomLevel] = useState(100);
+  const { zoomIn, zoomOut, fitView } = useReactFlow();
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setSelected(null);
+      setContextMenu(null);
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+      e.preventDefault();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "z" && e.shiftKey) {
+      e.preventDefault();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === "a") {
+      e.preventDefault();
+    }
+  }, [setSelected, setContextMenu]);
+
+  const handleZoomIn = useCallback(() => {
+    zoomIn();
+    setZoomLevel((p) => Math.min(p + 10, 160));
+  }, [zoomIn]);
+
+  const handleZoomOut = useCallback(() => {
+    zoomOut();
+    setZoomLevel((p) => Math.max(p - 10, 40));
+  }, [zoomOut]);
+
+  const handleFitView = useCallback(() => {
+    fitView({ padding: 0.25, duration: 220 });
+    setZoomLevel(100);
+  }, [fitView]);
+
   return (
     <>
+      {/* Board toolbar */}
+      <div className="pointer-events-none absolute left-1/2 top-3 z-10 -translate-x-1/2">
+        <div className="pointer-events-auto flex items-center gap-0.5 rounded-pill border border-hairline bg-canvas px-1.5 py-1 shadow-[var(--shadow-hairline)]">
+          <div className="flex items-center gap-0.5">
+            {TOOLBAR_TOOLS.map((tool) => {
+              const Icon = tool.icon;
+              return (
+                <button
+                  key={tool.id}
+                  type="button"
+                  onClick={() => setActiveTool(tool.id)}
+                  aria-label={tool.label}
+                  className={`grid h-9 w-9 place-items-center rounded-md transition-all active:scale-90 ${
+                    activeTool === tool.id
+                      ? "bg-primary/15 text-primary"
+                      : "text-ink-muted-48 hover:bg-surface-2 hover:text-ink"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                </button>
+              );
+            })}
+          </div>
+          <div className="mx-1.5 h-6 w-px bg-hairline" />
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={handleZoomOut}
+              aria-label="Zoom out"
+              className="grid h-9 w-9 place-items-center rounded-md text-ink-muted-48 transition-all active:scale-90 hover:bg-surface-2 hover:text-ink"
+            >
+              <ZoomOut className="h-4 w-4" />
+            </button>
+            <span className="min-w-[36px] text-center text-fine-print font-medium text-ink">
+              {zoomLevel}%
+            </span>
+            <button
+              type="button"
+              onClick={handleZoomIn}
+              aria-label="Zoom in"
+              className="grid h-9 w-9 place-items-center rounded-md text-ink-muted-48 transition-all active:scale-90 hover:bg-surface-2 hover:text-ink"
+            >
+              <ZoomIn className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleFitView}
+              aria-label="Fit view"
+              className="grid h-9 w-9 place-items-center rounded-md text-ink-muted-48 transition-all active:scale-90 hover:bg-surface-2 hover:text-ink"
+            >
+              <Minimize2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
       <ReactFlow
         nodes={nodesWithSelection}
         edges={styledEdges}
@@ -142,6 +254,14 @@ function FlowDiagram({
             node: n as FlowNode,
             position: { x: e.clientX, y: e.clientY },
           });
+        }}
+        onKeyDown={handleKeyDown}
+        onMoveEnd={() => {
+          const rf = (window as any).__reactFlowInstance;
+          if (rf) {
+            const vp = rf.getViewport();
+            setZoomLevel(Math.round(vp.zoom * 100));
+          }
         }}
       >
         <FitViewOnLayout

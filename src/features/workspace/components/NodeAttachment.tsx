@@ -9,9 +9,7 @@ interface NodeAttachmentProps {
 
 export function NodeAttachment({ node, onClick }: NodeAttachmentProps) {
   const title = node.data?.title || node.id;
-  const kind = isRfFlowNodeData(node.data)
-    ? node.data.kind
-    : "step";
+  const kind = isRfFlowNodeData(node.data) ? node.data.kind : "step";
 
   return (
     <button

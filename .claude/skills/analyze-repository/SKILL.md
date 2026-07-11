@@ -25,6 +25,7 @@ description: Analyser le dépôt, son architecture et ses risques sans implémen
 ## Livrable
 
 Rapport structuré :
+
 - Inventaire technique
 - Patterns existants
 - Gaps par rapport à la spec

@@ -6,18 +6,21 @@ paths:
 ---
 
 # Design System — Manbaa (عبنم)
+
 # Source : design.md (Apple Design Analysis) — seule source de vérité visuelle
 
 ## Couleurs — tokens CSS obligatoires
 
 ### Brand & Accent
+
 ```css
---color-primary: #0066cc;           /* Action Blue — TOUS les éléments interactifs */
---color-primary-focus: #0071e3;     /* Focus ring clavier uniquement */
---color-primary-on-dark: #2997ff;   /* Liens sur surfaces sombres UNIQUEMENT */
+--color-primary: #0066cc; /* Action Blue — TOUS les éléments interactifs */
+--color-primary-focus: #0071e3; /* Focus ring clavier uniquement */
+--color-primary-on-dark: #2997ff; /* Liens sur surfaces sombres UNIQUEMENT */
 ```
 
 ### Surfaces
+
 ```css
 --color-canvas: #ffffff;
 --color-canvas-parchment: #f5f5f7;
@@ -26,10 +29,11 @@ paths:
 --color-surface-tile-2: #2a2a2c;
 --color-surface-tile-3: #252527;
 --color-surface-black: #000000;
---color-surface-chip-translucent: rgba(210,210,215,0.64);
+--color-surface-chip-translucent: rgba(210, 210, 215, 0.64);
 ```
 
 ### Texte
+
 ```css
 --color-ink: #1d1d1f;
 --color-body-on-dark: #ffffff;
@@ -39,6 +43,7 @@ paths:
 ```
 
 ### Hairlines
+
 ```css
 --color-divider-soft: #f0f0f0;
 --color-hairline: #e0e0e0;
@@ -47,6 +52,7 @@ paths:
 ## Typographie
 
 ### Font stack
+
 ```css
 --font-display: "SF Pro Display", system-ui, -apple-system, sans-serif;
 --font-body: "SF Pro Text", system-ui, -apple-system, sans-serif;
@@ -54,6 +60,7 @@ paths:
 ```
 
 ### Hiérarchie
+
 ```
 hero-display    56px
 display-lg      40px
@@ -74,12 +81,14 @@ nav-link        12px
 ```
 
 ### Règles typographiques
+
 - Body copy : **17px obligatoire** — jamais 16px
 - Letter-spacing négatif pour les titres ≥ 17px
 - Échelle de poids : **300 / 400 / 600 / 700** — le 500 est délibérément absent
 - Line-height body : minimum 1.47
 
 ## Espacement
+
 ```css
 --spacing-xxs: 4px;
 --spacing-xs: 8px;
@@ -92,14 +101,15 @@ nav-link        12px
 ```
 
 ## Border Radius
+
 ```css
---radius-none: 0px;       /* Tiles full-bleed */
---radius-xs: 5px;         /* Inline chips */
---radius-sm: 8px;         /* Boutons dark utility, imagery */
---radius-md: 11px;        /* Pearl Button capsules */
---radius-lg: 18px;        /* Cards utility */
---radius-pill: 9999px;    /* CTAs primaires, search input, chips */
---radius-full: 50%;       /* Contrôles circulaires */
+--radius-none: 0px; /* Tiles full-bleed */
+--radius-xs: 5px; /* Inline chips */
+--radius-sm: 8px; /* Boutons dark utility, imagery */
+--radius-md: 11px; /* Pearl Button capsules */
+--radius-lg: 18px; /* Cards utility */
+--radius-pill: 9999px; /* CTAs primaires, search input, chips */
+--radius-full: 50%; /* Contrôles circulaires */
 ```
 
 ## Élévation & Ombres
@@ -115,16 +125,17 @@ Product shadow → rgba(0,0,0,0.22) 3px 5px 30px 0  ← IMAGES PRODUIT SEULEMENT
 
 ## Boutons — variantes et grammaire
 
-| Variante | Background |
-|---|---|
-| primary | #0066cc |
-| secondary-pill | transparent |
-| dark-utility | #1d1d1f |
-| pearl-capsule | #fafafc |
-| store-hero | #0066cc |
-| icon-circular | rgba(210,210,215,0.64) |
+| Variante       | Background             |
+| -------------- | ---------------------- |
+| primary        | #0066cc                |
+| secondary-pill | transparent            |
+| dark-utility   | #1d1d1f                |
+| pearl-capsule  | #fafafc                |
+| store-hero     | #0066cc                |
+| icon-circular  | rgba(210,210,215,0.64) |
 
 **Active state obligatoire sur TOUS les boutons :**
+
 ```css
 button:active {
   transform: scale(0.95);

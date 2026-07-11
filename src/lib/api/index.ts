@@ -1,6 +1,17 @@
 export { apiClient, type ApiClientOptions } from "./apiClient";
-export { HttpError, http, type HttpParseAs, type HttpRequestOptions } from "./http";
-export { API_BASE_URL, API_PATH_PREFIX, buildAuthHeaders, getAccessToken, setAccessTokenForDevelopment } from "./config";
+export {
+  HttpError,
+  http,
+  type HttpParseAs,
+  type HttpRequestOptions,
+} from "./http";
+export {
+  API_BASE_URL,
+  API_PATH_PREFIX,
+  buildAuthHeaders,
+  getAccessToken,
+  setAccessTokenForDevelopment,
+} from "./config";
 export { apiUrl, buildQueryString } from "./url";
 export { json } from "./helpers";
 export * from "./types";
@@ -17,3 +28,4 @@ export * from "./services/health.api";
 export * from "./services/organizations.api";
 export * from "./services/projects.api";
 export * from "./services/adminSkills.api";
+export * from "./services/auth.api";
