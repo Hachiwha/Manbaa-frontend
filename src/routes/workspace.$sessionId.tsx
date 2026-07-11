@@ -8,6 +8,7 @@ import { AiResultsPanel } from "@/features/workspace/components/AiResultsPanel";
 import { ChatFab } from "@/features/workspace/components/ChatFab";
 import { WorkflowPreview } from "@/features/workspace/components/WorkflowPreview";
 import { useWorkspaceRealtime } from "@/lib/realtime/useWorkspaceRealtime";
+import { requireAuth } from "@/lib/auth/guards";
 import {
   getSession,
   getSessionWorkflowState,
@@ -30,6 +31,7 @@ import type {
 } from "@/features/workspace/types";
 
 export const Route = createFileRoute("/workspace/$sessionId")({
+  beforeLoad: requireAuth,
   component: WorkspacePage,
 });
 

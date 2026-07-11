@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { login, HttpError } from "@/lib/api";
+import { requireGuest } from "@/lib/auth/guards";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -15,6 +16,7 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export const Route = createFileRoute("/login")({
+  beforeLoad: requireGuest,
   component: LoginPage,
 });
 

@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { register as registerApi, HttpError } from "@/lib/api";
+import { requireGuest } from "@/lib/auth/guards";
 
 const registerSchema = z
   .object({
@@ -25,6 +26,7 @@ const registerSchema = z
 type RegisterForm = z.infer<typeof registerSchema>;
 
 export const Route = createFileRoute("/register")({
+  beforeLoad: requireGuest,
   component: RegisterPage,
 });
 

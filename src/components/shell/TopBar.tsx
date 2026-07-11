@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useMutation } from "@tanstack/react-query";
 import {
   Bell,
   ChevronLeft,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ShareWorkflowModal } from "@/features/workspace/components/ShareWorkflowModal";
+import { logout } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 function Monogram() {
@@ -62,6 +64,11 @@ type TopBarProps =
 
 export function TopBar(props: TopBarProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const navigate = useNavigate();
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSettled: () => navigate({ to: "/login" }),
+  });
 
   if (props.variant === "minimal") {
     return (
@@ -86,7 +93,7 @@ export function TopBar(props: TopBarProps) {
       <>
         <header className="sticky top-0 z-50 flex h-12 shrink-0 items-center gap-1 bg-surface-black px-2 sm:px-3">
           <Link
-            to="/"
+            to="/dashboard"
             aria-label="Back to dashboard"
             className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-body-on-dark transition-colors active:scale-90 hover:bg-white/10"
           >
@@ -200,7 +207,7 @@ export function TopBar(props: TopBarProps) {
   return (
     <>
       <header className="sticky top-0 z-50 flex h-12 shrink-0 items-center gap-3 bg-surface-black px-4">
-        <Link to="/" className="flex items-center gap-2">
+        <Link to="/dashboard" className="flex items-center gap-2">
           <Monogram />
           <span className="text-sm font-semibold tracking-tight text-body-on-dark">
             Manbaa
@@ -209,7 +216,7 @@ export function TopBar(props: TopBarProps) {
 
         <nav className="ml-2 hidden items-center gap-1 md:flex">
           <Link
-            to="/"
+            to="/dashboard"
             activeOptions={{ exact: true }}
             activeProps={{ className: "text-body-on-dark bg-white/10" }}
             inactiveProps={{
@@ -252,7 +259,11 @@ export function TopBar(props: TopBarProps) {
               <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive">
+              <DropdownMenuItem
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+                className="text-destructive focus:text-destructive"
+              >
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -279,7 +290,7 @@ export function TopBar(props: TopBarProps) {
           </SheetHeader>
           <nav className="mt-6 flex flex-col gap-1">
             <Link
-              to="/"
+              to="/dashboard"
               onClick={() => setMobileNavOpen(false)}
               className="rounded-md px-3 py-2 text-sm font-medium text-foreground transition-colors active:scale-[0.98] hover:bg-surface-2"
             >
