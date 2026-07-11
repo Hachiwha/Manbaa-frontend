@@ -3,178 +3,320 @@
 @import "tw-animate-css";
 @import "reactflow/dist/style.css";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
-  --font-sans: "Inter", "SF Pro Display", system-ui, sans-serif;
-  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display-face);
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  /* Manbaa radius scale — see design-system.md "Border Radius" */
+  --radius-none: 0px;
+  --radius-xs: 5px;
+  --radius-sm: 8px;
+  --radius-md: 11px;
+  --radius-lg: 18px;
+  --radius-pill: 9999px;
+  --radius-full: 9999px;
 
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-surface-3: var(--surface-3);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
+  /* Manbaa spacing scale — see design-system.md "Espacement" */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 17px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-section: 80px;
+
+  /* shadcn/ui semantic slots, remapped onto Manbaa tokens */
+  --color-background: var(--canvas);
+  --color-foreground: var(--ink);
+  --color-surface: var(--canvas-parchment);
+  --color-surface-2: var(--surface-pearl);
+  --color-surface-3: var(--hairline);
+  --color-card: var(--canvas);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--canvas);
+  --color-popover-foreground: var(--ink);
   --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary-glow: var(--primary-glow);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
+  --color-primary-foreground: var(--on-primary);
+  --color-secondary: var(--surface-pearl);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--divider-soft);
+  --color-muted-foreground: var(--ink-muted-48);
+  --color-accent: var(--surface-pearl);
+  --color-accent-foreground: var(--ink);
   --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-foreground: var(--on-primary);
   --color-success: var(--success);
   --color-warning: var(--warning);
-  --color-info: var(--info);
-  --color-border: var(--border);
-  --color-border-strong: var(--border-strong);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+  --color-info: var(--primary);
+  --color-border: var(--hairline);
+  --color-border-strong: var(--ink-muted-48);
+  --color-input: var(--canvas);
+  --color-ring: var(--primary-focus);
 
-  --shadow-glow: var(--shadow-glow);
-  --shadow-elevated: var(--shadow-elevated);
+  /* Manbaa named tokens — direct 1:1 with design-system.md, for explicit reference */
+  --color-canvas: var(--canvas);
+  --color-canvas-parchment: var(--canvas-parchment);
+  --color-surface-pearl: var(--surface-pearl);
+  --color-surface-tile-1: var(--surface-tile-1);
+  --color-surface-tile-2: var(--surface-tile-2);
+  --color-surface-tile-3: var(--surface-tile-3);
+  --color-surface-black: var(--surface-black);
+  --color-surface-chip-translucent: var(--surface-chip-translucent);
+  --color-ink: var(--ink);
+  --color-body-on-dark: var(--body-on-dark);
+  --color-body-muted: var(--body-muted);
+  --color-ink-muted-80: var(--ink-muted-80);
+  --color-ink-muted-48: var(--ink-muted-48);
+  --color-divider-soft: var(--divider-soft);
+  --color-hairline: var(--hairline);
+  --color-primary-focus: var(--primary-focus);
+  --color-primary-on-dark: var(--primary-on-dark);
+
+  --shadow-product: var(--shadow-product);
+  --shadow-hairline: var(--shadow-hairline);
 }
 
 :root {
   --radius: 0.75rem;
 
-  /* Dark FlowForge palette - deep slate with indigo/violet accents */
-  --background: oklch(0.16 0.02 265);
-  --foreground: oklch(0.97 0.01 250);
+  /* Manbaa palette — source of truth: design-system.md / DESIGN.md (Apple Design Analysis) */
 
-  --surface: oklch(0.19 0.022 265);
-  --surface-2: oklch(0.22 0.025 265);
-  --surface-3: oklch(0.26 0.028 265);
+  /* Brand & accent */
+  --primary: #0066cc;              /* Action Blue — every interactive element, nothing else */
+  --primary-focus: #0071e3;        /* keyboard focus ring only */
+  --primary-on-dark: #2997ff;      /* links on dark surfaces only */
+  --on-primary: #ffffff;
 
-  --card: oklch(0.20 0.024 265);
-  --card-foreground: oklch(0.97 0.01 250);
-  --popover: oklch(0.21 0.025 265);
-  --popover-foreground: oklch(0.97 0.01 250);
+  /* Surfaces */
+  --canvas: #ffffff;
+  --canvas-parchment: #f5f5f7;
+  --surface-pearl: #fafafc;
+  --surface-tile-1: #272729;
+  --surface-tile-2: #2a2a2c;
+  --surface-tile-3: #252527;
+  --surface-black: #000000;
+  --surface-chip-translucent: rgba(210, 210, 215, 0.64);
 
-  --primary: oklch(0.66 0.20 280);          /* indigo-violet */
-  --primary-foreground: oklch(0.99 0 0);
-  --primary-glow: oklch(0.74 0.22 290);
+  /* Text */
+  --ink: #1d1d1f;
+  --body-on-dark: #ffffff;
+  --body-muted: #cccccc;
+  --ink-muted-80: #333333;
+  --ink-muted-48: #7a7a7a;
 
-  --secondary: oklch(0.27 0.03 265);
-  --secondary-foreground: oklch(0.95 0.01 250);
+  /* Hairlines */
+  --divider-soft: #f0f0f0;
+  --hairline: #e0e0e0;
 
-  --muted: oklch(0.24 0.025 265);
-  --muted-foreground: oklch(0.68 0.02 260);
+  /* Status colors — not specified in design-system.md (Apple's marketing site has no error/status
+     UI); iOS system palette chosen to stay in the same visual family. Flag for design confirmation. */
+  --destructive: #ff3b30;
+  --success: #34c759;
+  --warning: #ff9500;
 
-  --accent: oklch(0.72 0.18 195);            /* cyan accent */
-  --accent-foreground: oklch(0.15 0.02 265);
+  /* Fonts — SF Pro first, Inter fallback (see design-system.md "Note on Font Substitutes") */
+  --font-display-face: "SF Pro Display", "Inter", system-ui, -apple-system, sans-serif;
+  --font-body: "SF Pro Text", "Inter", system-ui, -apple-system, sans-serif;
 
-  --destructive: oklch(0.65 0.23 25);
-  --destructive-foreground: oklch(0.99 0 0);
+  /* The single system shadow — product imagery only, never chrome */
+  --shadow-product: 3px 5px 30px 0 rgba(0, 0, 0, 0.22);
+  --shadow-hairline: 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
 
-  --success: oklch(0.72 0.18 155);
-  --warning: oklch(0.78 0.17 75);
-  --info: oklch(0.70 0.15 230);
-
-  --border: oklch(0.28 0.02 265);
-  --border-strong: oklch(0.35 0.025 265);
-  --input: oklch(0.25 0.025 265);
-  --ring: oklch(0.66 0.20 280);
-
-  --gradient-primary: linear-gradient(135deg, oklch(0.66 0.20 280), oklch(0.74 0.22 290));
-  --gradient-surface: linear-gradient(180deg, oklch(0.20 0.024 265), oklch(0.17 0.022 265));
-  --gradient-mesh: radial-gradient(at 20% 0%, oklch(0.30 0.10 280 / 0.4) 0px, transparent 50%),
-                   radial-gradient(at 80% 100%, oklch(0.30 0.10 200 / 0.3) 0px, transparent 50%);
-
-  --shadow-glow: 0 0 0 1px oklch(0.66 0.20 280 / 0.3), 0 8px 32px -8px oklch(0.66 0.20 280 / 0.4);
-  --shadow-elevated: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 8px 24px -12px oklch(0 0 0 / 0.5);
+/* Manbaa is light-mode only — never honor the OS/browser dark preference */
+:root, html {
+  color-scheme: light only;
 }
 
 @layer base {
   * {
     border-color: var(--color-border);
+    box-sizing: border-box;
   }
   html, body, #root {
     height: 100%;
   }
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-sans);
-    font-feature-settings: "cv11", "ss01", "ss03";
+    font-family: var(--font-body);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.47;
+    letter-spacing: -0.374px;
+    font-feature-settings: "ss03";
     -webkit-font-smoothing: antialiased;
   }
 }
 
+/* Manbaa type scale — see design-system.md "Typographie" / DESIGN.md "Typography" */
 @layer utilities {
-  .bg-mesh { background-image: var(--gradient-mesh); }
-  .bg-gradient-primary { background-image: var(--gradient-primary); }
-  .bg-gradient-surface { background-image: var(--gradient-surface); }
-  .text-gradient-primary {
-    background-image: var(--gradient-primary);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  .text-hero-display {
+    font-family: var(--font-display);
+    font-size: 56px;
+    font-weight: 600;
+    line-height: 1.07;
+    letter-spacing: -0.28px;
   }
+  .text-display-lg {
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+  .text-display-md {
+    font-family: var(--font-body);
+    font-size: 34px;
+    font-weight: 600;
+    line-height: 1.47;
+    letter-spacing: -0.374px;
+  }
+  .text-lead {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 400;
+    line-height: 1.14;
+    letter-spacing: 0.196px;
+  }
+  .text-lead-airy {
+    font-family: var(--font-body);
+    font-size: 24px;
+    font-weight: 300;
+    line-height: 1.5;
+    letter-spacing: 0;
+  }
+  .text-tagline {
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 600;
+    line-height: 1.19;
+    letter-spacing: 0.231px;
+  }
+  .text-body-strong {
+    font-family: var(--font-body);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.24;
+    letter-spacing: -0.374px;
+  }
+  .text-body {
+    font-family: var(--font-body);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 1.47;
+    letter-spacing: -0.374px;
+  }
+  .text-dense-link {
+    font-family: var(--font-body);
+    font-size: 17px;
+    font-weight: 400;
+    line-height: 2.41;
+    letter-spacing: 0;
+  }
+  .text-caption {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.43;
+    letter-spacing: -0.224px;
+  }
+  .text-caption-strong {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.29;
+    letter-spacing: -0.224px;
+  }
+  .text-button-large {
+    font-family: var(--font-body);
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: 0;
+  }
+  .text-button-utility {
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.29;
+    letter-spacing: -0.224px;
+  }
+  .text-fine-print {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.12px;
+  }
+  .text-micro-legal {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 400;
+    line-height: 1.3;
+    letter-spacing: -0.08px;
+  }
+  .text-nav-link {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.12px;
+  }
+
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: var(--border-strong) transparent;
+    scrollbar-color: var(--color-border-strong) transparent;
   }
   .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: var(--border-strong);
+    background: var(--color-border-strong);
     border-radius: 999px;
-  }
-  .glass {
-    background: color-mix(in oklab, var(--surface) 70%, transparent);
-    backdrop-filter: blur(12px);
   }
 }
 
 /* React Flow theming */
 .react-flow__background {
-  background-color: var(--background);
+  background-color: var(--color-background);
 }
 .react-flow__edge-path {
-  stroke: var(--border-strong);
+  stroke: var(--color-border-strong);
   stroke-width: 1.5;
 }
 .react-flow__edge.animated .react-flow__edge-path {
-  stroke: var(--primary);
+  stroke: var(--color-primary);
 }
 .react-flow__handle {
-  background: var(--primary);
-  border: 2px solid var(--background);
+  background: var(--color-primary);
+  border: 2px solid var(--color-background);
   width: 10px;
   height: 10px;
 }
 .react-flow__controls {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: var(--shadow-elevated);
+  box-shadow: var(--shadow-hairline);
 }
 .react-flow__controls-button {
   background: transparent;
-  border-bottom: 1px solid var(--border);
-  color: var(--foreground);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-foreground);
   fill: currentColor;
 }
 .react-flow__controls-button:hover {
-  background: var(--surface-3);
+  background: var(--color-surface-3);
 }
 .react-flow__minimap {
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
 }
 .react-flow__attribution { display: none; }

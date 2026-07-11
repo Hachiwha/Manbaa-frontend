@@ -1,0 +1,749 @@
+# CAHIER DES CHARGES — PPP Frontend
+
+> **Version:** 1.0 — Generated 2026-07-10
+> **Status:** Draft
+> **Owner:** Lead Systems Architect
+> **Source of Truth:** `design.md` (Apple Design Analysis) + `ppp-backend/ARCHITECTURE.md` + `packages/contracts/`
+
+---
+
+## 1. Project Overview
+
+### 1.1 Mission
+
+PPP is an AI-powered brand identity generation platform. Users upload multi-format inputs (PDFs, photos, sketches, text, URLs, notes) and the AI orchestrator processes them through specialized microservices to generate a complete visual identity — logos, color palettes, typography systems, brand guidelines, and a consolidated Brand Document.
+
+### 1.2 Core Concept
+
+Inspired by NotebookLM's document ingestion model, but applied to brand identity creation. The user feeds the system raw materials (mood boards, competitor PDFs, product photos, handwritten notes) and the AI synthesizes a coherent visual identity that can be refined interactively on a ReactFlow-based Sketch Board.
+
+### 1.3 Target Users
+
+- **B2B:** Teams and companies building or refreshing brand identity
+- **B2C:** Individual creators and entrepreneurs
+- **Single experience** — no tiered subscription gating
+
+### 1.4 Monorepo Structure
+
+```
+ppp/
+├── apps/
+│   ├── ai-orchestrator/
+│   ├── document-worker/
+│   ├── export-worker/        # Merged into ai-services
+│   ├── media-worker/
+│   └── research-worker/
+├── packages/
+│   └── contracts/            # JSON Schemas, TS types, Python models
+├── docs/
+├── ppp-backend/              # NestJS
+├── ppp-frontend/             # React 19 ← YOU ARE HERE
+├── ppp-ai/
+├── ppp-infra/
+└── ppp-docs/
+```
+
+---
+
+## 2. Functional Scope
+
+### 2.1 Input Processing
+
+| Aspect | Detail |
+|--------|--------|
+| **Supported formats** | PDF, DOCX, PPTX, TXT, PNG, JPG, URLs, pasted text, manual notes |
+| **File size limits** | Per-workspace `storage_bytes` quota (not per-file) |
+| **Bulk upload** | Drag-and-drop UI implies multiple files; no explicit bulk logic documented |
+| **Organization model** | `organization_id` → `workspace_id` hierarchy |
+| **Processing trigger** | Automatic on upload: MinIO storage → NATS `workspace.source.process.requested` → RAG Worker (extraction, chunking, embeddings) |
+
+### 2.2 Microservices (Backend/AI)
+
+| Service | Responsibility |
+|---------|----------------|
+| **Document Extraction** | PDF, DOCX, PPTX parsing and text extraction |
+| **Embedding + RAG Pipeline** | Chunking, vector embeddings, retrieval |
+| **Model Routing** | AI model selection and orchestration |
+| **Agent Management** | Worker lifecycle and task distribution |
+| **Web Research/Crawling** | URL content extraction and analysis |
+| **Export** | PDF, SVG, PNG, JPG generation |
+
+### 2.3 Sketch Board (ReactFlow Canvas)
+
+| Aspect | Detail |
+|--------|--------|
+| **Node types** | User-created: sticky note, text, heading, shape, frame. Source-derived: image, source card. RAG: citation card. AI: chat response, concept card, asset card. Structural: connector, group |
+| **Drag from Results** | Yes — "Add result to board", "Add section to board", "Add citation to board" |
+| **Connectors** | Yes — ReactFlow connectors for relational mapping (color palette → logo, direction → concept) |
+| **Persistence** | Server-side, durable (canvas metadata, versions, snapshots managed by Dev 3 on NestJS) |
+| **Version history** | Undo/redo + snapshots (workspace-snapshots MinIO bucket, canvas versions in DB) |
+| **Scope boundary** | Canvas state management = Dev 3. AI side only produces output that lands on board |
+
+**Node Registry:**
+
+| Node Type | Source | Description |
+|-----------|--------|-------------|
+| `sticky-note` | User | Freeform text note |
+| `text` | User | Rich text block |
+| `heading` | User | Section heading |
+| `shape` | User | Geometric shape |
+| `frame` | User | Container/frame |
+| `image` | Source upload | Uploaded image |
+| `source-card` | Source upload | Document source reference |
+| `citation-card` | RAG retrieval | Cited excerpt from source |
+| `chat-response` | AI chat | Response from AI assistant |
+| `concept-card` | AI generation | Generated brand concept |
+| `asset-card` | AI generation | Generated brand asset (logo, palette, etc.) |
+| `connector` | Structural | Relationship line between nodes |
+| `group` | Structural | Node grouping container |
+
+### 2.4 AI Chat
+
+| Aspect | Detail |
+|--------|--------|
+| **Model** | Conversational, multi-turn dialogue with context |
+| **Context access** | Full workspace context (all uploaded sources, board state) |
+| **Board interaction** | Users can select board elements and ask AI to act on them (e.g., select logo → "make this more minimal") |
+| **Draft preservation** | Drafts preserved on close |
+| **History** | Persisted per workspace |
+
+### 2.5 AI Output
+
+| Output Type | Landing Target |
+|-------------|----------------|
+| Logos | Asset cards on board |
+| Brand DNA | Brand Document artifact |
+| Color palettes | Concept cards on board |
+| Typography suggestions | Concept cards on board |
+| Visual identity system | Compiled into Brand Document |
+
+### 2.6 Brand Document
+
+- Consolidated artifact aggregating all generated identity elements
+- Exportable as compiled PDF/SVG/PNG/JPG
+- Serves as the single source of truth for the generated brand
+
+### 2.7 Export System
+
+| Aspect | Detail |
+|--------|--------|
+| **Formats** | PDF, SVG, PNG, JPG |
+| **Full export** | Complete Brand Document as compiled artifact |
+| **Single element export** | Individual logos, palettes, or any board element |
+| **Implementation** | jsPDF for PDF generation, worker service for heavy processing |
+
+### 2.8 Sharing & Collaboration
+
+| Aspect | Detail |
+|--------|--------|
+| **Sharing model** | Invited users only — no public links |
+| **RBAC** | None |
+| **External stakeholders** | No view/comment access without invitation |
+| **Editor model** | Single editor (no multi-cursor real-time) |
+| **Presence/cursors** | Frontend renders (backend state = Dev 3) |
+
+### 2.9 Authentication
+
+| Aspect | Detail |
+|--------|--------|
+| **Method** | Email/password |
+| **Token** | JWT |
+| **Scoping** | Organization → Workspace hierarchy |
+
+---
+
+## 3. Technical Architecture
+
+### 3.1 Frontend Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Framework** | React 19 + TanStack Start (SSR) |
+| **Routing** | TanStack Router (file-based) |
+| **Data Fetching** | TanStack React Query |
+| **Build** | Vite 7 |
+| **Language** | TypeScript 5.8 |
+| **Styling** | Tailwind CSS 4 |
+| **UI Components** | shadcn/ui (Radix UI primitives + CVA) |
+| **Icons** | Lucide React |
+| **Forms** | React Hook Form + Zod |
+| **Animation** | Framer Motion |
+| **Charts** | Recharts |
+| **Flow Diagrams** | ReactFlow |
+| **BPMN** | bpmn-js |
+| **PDF Generation** | jsPDF |
+| **Date Utilities** | date-fns + react-day-picker |
+| **Carousel** | Embla Carousel |
+| **Toast Notifications** | Sonner |
+| **Drawer** | Vaul |
+| **Command Palette** | cmdk |
+| **Deployment** | Cloudflare Workers (via Wrangler) |
+| **Package Manager** | Bun |
+| **Linting** | ESLint + Prettier |
+| **Scaffolding** | Lovable.dev |
+
+### 3.2 Routing Structure
+
+```
+src/routes/
+├── __root.tsx                    # Root layout
+├── index.tsx                     # Landing/home
+├── project.$projectId.tsx        # Project workspace
+├── shared.$token.tsx             # Shared view (invited users)
+├── test.tsx                      # Dev testing
+└── workspace.$sessionId.tsx      # Active workspace session
+```
+
+### 3.3 API Integration Layer
+
+```
+src/lib/api/
+├── apiClient.ts                  # Base HTTP client
+├── http.ts                       # HTTP utilities
+├── config.ts                     # API configuration
+└── [13 domain services]          # Domain-specific API calls
+```
+
+- **State management:** TanStack React Query for server state
+- **Auth:** JWT token management (header injection, refresh flow)
+- **Pattern:** Service-per-domain, not service-per-entity
+
+### 3.4 Component Architecture
+
+```
+src/components/
+├── shell/
+│   └── TopBar.tsx                # Global navigation bar
+└── ui/
+    └── [46 shadcn/ui components] # Design system primitives
+
+src/features/
+├── workflows/
+│   ├── types.ts                  # Workflow type definitions
+│   └── mock-data.ts              # Development fixtures
+└── workspace/
+    └── [14 components]           # Layout, panels, chat, ReactFlow
+```
+
+---
+
+## 4. Design System Reference
+
+> **Non-negotiable.** All visual constraints sourced from `design.md` (Apple Design Analysis).
+
+### 4.1 Color Palette
+
+#### Brand & Accent
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `{colors.primary}` | `#0066cc` | **Single accent color.** All CTAs, links, focus rings. Non-negotiable. |
+| `{colors.primary-focus}` | `#0071e3` | Keyboard focus ring only |
+| `{colors.primary-on-dark}` | `#2997ff` | Links on dark surfaces only |
+
+#### Surfaces
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `{colors.canvas}` | `#ffffff` | Primary light canvas |
+| `{colors.canvas-parchment}` | `#f5f5f7` | Alternating light tiles, footer |
+| `{colors.surface-pearl}` | `#fafafc` | Secondary "ghost" buttons |
+| `{colors.surface-tile-1}` | `#272729` | Primary dark tile |
+| `{colors.surface-tile-2}` | `#2a2a2c` | Micro-step lighter (separation) |
+| `{colors.surface-tile-3}` | `#252527` | Micro-step darker (bottom stack) |
+| `{colors.surface-black}` | `#000000` | Global nav, video backgrounds |
+| `{colors.surface-chip-translucent}` | `#d2d2d7` | Circular control buttons (~64% alpha) |
+
+#### Text
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `{colors.ink}` | `#1d1d1f` | Headlines, body, dark utility buttons |
+| `{colors.body-on-dark}` | `#ffffff` | Text on dark tiles/nav |
+| `{colors.body-muted}` | `#cccccc` | Secondary copy on dark |
+| `{colors.ink-muted-80}` | `#333333` | Body text on Pearl Button |
+| `{colors.ink-muted-48}` | `#7a7a7a` | Disabled text, legal fine-print |
+
+#### Hairlines
+| Token | Hex | Usage |
+|-------|-----|-------|
+| `{colors.divider-soft}` | `#f0f0f0` | Button ring shadow |
+| `{colors.hairline}` | `#e0e0e0` | 1px border on utility cards/chips |
+
+### 4.2 Typography
+
+**Font Families:**
+- Display: `SF Pro Display, system-ui, -apple-system, sans-serif`
+- Body/UI: `SF Pro Text, system-ui, -apple-system, sans-serif`
+- Fallback (non-Apple): `Inter` with `font-feature-settings: "ss03"`, tighter letter-spacing, reduced line-height
+
+**Hierarchy:**
+
+| Token | Size | Weight | Line Height | Letter Spacing | Use |
+|-------|------|--------|-------------|----------------|-----|
+| `{typography.hero-display}` | 56px | 600 | 1.07 | -0.28px | Hero headline |
+| `{typography.display-lg}` | 40px | 600 | 1.10 | 0 | Tile headlines |
+| `{typography.display-md}` | 34px | 600 | 1.47 | -0.374px | Section heads |
+| `{typography.lead}` | 28px | 400 | 1.14 | 0.196px | Product tile subcopy |
+| `{typography.lead-airy}` | 24px | 300 | 1.5 | 0 | Environment lead (rare 300) |
+| `{typography.tagline}` | 21px | 600 | 1.19 | 0.231px | Sub-tile tagline |
+| `{typography.body-strong}` | 17px | 600 | 1.24 | -0.374px | Inline strong emphasis |
+| `{typography.body}` | 17px | 400 | 1.47 | -0.374px | Default paragraph |
+| `{typography.dense-link}` | 17px | 400 | 2.41 | 0 | Footer link columns |
+| `{typography.caption}` | 14px | 400 | 1.43 | -0.224px | Captions, button text |
+| `{typography.caption-strong}` | 14px | 600 | 1.29 | -0.224px | Emphasized captions |
+| `{typography.button-large}` | 18px | 300 | 1.0 | 0 | Store hero CTAs |
+| `{typography.button-utility}` | 14px | 400 | 1.29 | -0.224px | Utility/nav buttons |
+| `{typography.fine-print}` | 12px | 400 | 1.0 | -0.12px | Fine-print, footer |
+| `{typography.micro-legal}` | 10px | 400 | 1.3 | -0.08px | Micro legal disclaimers |
+| `{typography.nav-link}` | 12px | 400 | 1.0 | -0.12px | Global nav items |
+
+**Principles:**
+- Negative letter-spacing at display sizes (17px+)
+- Body copy at **17px**, not 16px
+- Weight 300 is rare and deliberate (button-large, lead-airy)
+- Weight 600 for headlines (not 700)
+- Weight 500 is **deliberately absent** (ladder: 300/400/600/700)
+- Line-height is context-specific (1.07–2.41 range)
+
+### 4.3 Spacing System
+
+| Token | Value |
+|-------|-------|
+| `{spacing.xxs}` | 4px |
+| `{spacing.xs}` | 8px |
+| `{spacing.sm}` | 12px |
+| `{spacing.md}` | 17px |
+| `{spacing.lg}` | 24px |
+| `{spacing.xl}` | 32px |
+| `{spacing.xxl}` | 48px |
+| `{spacing.section}` | 80px |
+
+- Base unit: 8px
+- Section vertical padding: 80px
+- Card padding: 24px
+- Button padding: 8–11px vertical, 15–22px horizontal
+
+### 4.4 Border Radius
+
+| Token | Value | Use |
+|-------|-------|-----|
+| `{rounded.none}` | 0px | Full-bleed tiles |
+| `{rounded.xs}` | 5px | Inline chips (rare) |
+| `{rounded.sm}` | 8px | Dark utility buttons, inline card imagery |
+| `{rounded.md}` | 11px | Pearl Button capsules |
+| `{rounded.lg}` | 18px | Store utility cards, accessories grid |
+| `{rounded.pill}` | 9999px | Primary CTAs, search input, configurator chips |
+| `{rounded.full}` | 50% | Circular control chips |
+
+### 4.5 Elevation & Depth
+
+| Level | Treatment | Use |
+|-------|-----------|-----|
+| Flat | No shadow, no border | Full-bleed tiles, nav, footer |
+| Soft hairline | 1px `rgba(0,0,0,0.08)` border | Utility cards, sub-nav |
+| Backdrop blur | `backdrop-filter: blur(N)` on Parchment 80% | Sub-nav, sticky bar |
+| Product shadow | `rgba(0,0,0,0.22) 3px 5px 30px 0` | **Only** product renders on surfaces |
+
+**Shadow philosophy:** Exactly ONE drop-shadow in the entire system — applied to product imagery only. Never on cards, buttons, or text.
+
+### 4.6 Button Grammar
+
+| Component | Background | Text | Rounded | Padding |
+|-----------|------------|------|---------|---------|
+| `button-primary` | `#0066cc` | `#ffffff` | pill | 11px × 22px |
+| `button-secondary-pill` | transparent | `#0066cc` | pill | 11px × 22px |
+| `button-dark-utility` | `#1d1d1f` | `#ffffff` | sm (8px) | 8px × 15px |
+| `button-pearl-capsule` | `#fafafc` | `#333333` | md (11px) | 8px × 14px |
+| `button-store-hero` | `#0066cc` | `#ffffff` | pill | 14px × 28px |
+| `button-icon-circular` | `rgba(210,210,215,0.64)` | `#1d1d1f` | full (50%) | 44px × 44px |
+
+**Active state:** `transform: scale(0.95)` — system-wide micro-interaction.
+
+### 4.7 Do's and Don'ts
+
+**DO:**
+- Use `{colors.primary}` (#0066cc) for every interactive element — nothing else
+- Set headlines with negative letter-spacing (`-0.28 → -0.374px`)
+- Run body copy at 17px / 400 / 1.47 / -0.374px
+- Alternate light/dark tiles — the color change IS the divider
+- Reserve `{rounded.pill}` for primary CTAs and action elements
+- Apply product-shadow only to product renders
+- Use `transform: scale(0.95)` as active/press state on every button
+
+**DON'T:**
+- Don't introduce a second accent color
+- Don't add shadows to cards, buttons, or text
+- Don't use gradients as decorative backgrounds
+- Don't set body copy at weight 500
+- Don't round full-bleed tiles
+- Don't tighten line-height below 1.47 for body copy
+- Don't mix radius grammars (sm for compact, lg for cards, pill for CTAs)
+- Don't use `{colors.primary-on-dark}` on light surfaces
+
+---
+
+## 5. Component Inventory
+
+### 5.1 Existing shadcn/ui Components (46)
+
+Located in `src/components/ui/`. These are the design system primitives. All styling must align with Section 4 design tokens.
+
+### 5.2 Existing Workspace Components (14)
+
+Located in `src/features/workspace/`. Includes layout, panels, chat, and ReactFlow integration.
+
+### 5.3 Shell Components
+
+- `TopBar.tsx` — Global navigation bar
+
+### 5.4 Lib Utilities
+
+- `src/lib/utils.ts` — General utilities
+- `src/hooks/use-mobile.tsx` — Mobile detection hook
+
+---
+
+## 6. API Integration Layer
+
+### 6.1 Structure
+
+```
+src/lib/api/
+├── apiClient.ts          # Base HTTP client (JWT injection, error handling)
+├── http.ts               # HTTP utilities (request/response interceptors)
+├── config.ts             # API base URL, environment config
+└── [13 domain services]  # One service per backend domain
+```
+
+### 6.2 Pattern
+
+- **Service-per-domain** (not service-per-entity)
+- TanStack React Query for caching, invalidation, optimistic updates
+- JWT token management (header injection, refresh flow)
+
+### 6.3 Contract Gap (Known Issue)
+
+| Aspect | Status |
+|--------|--------|
+| `@ppp/contracts` package exists | Yes — 11 JSON Schemas, TS types, Python models |
+| Frontend imports `@ppp/contracts` | **No** — completely disconnected |
+| Frontend API types | Independently defined in `src/lib/api/` |
+| NATS subject constants | Manually duplicated, not imported from contracts |
+
+**Impact:** Frontend types may diverge from backend/AI contract definitions. No CI enforcement.
+
+**Mitigation for this project:** Reference `packages/contracts/` as the canonical type source. When creating new API integration code, prefer aligning with contract definitions even if import isn't wired yet.
+
+---
+
+## 7. ReactFlow Board Specification
+
+### 7.1 Critical Constraint
+
+> **ReactFlow must be preserved.** The sketch board generates a marketing flow after VI validation. Every component created serves as a resource to finalize the Visual Identity.
+
+### 7.2 Board Capabilities
+
+- **Node creation:** Drag from Results panel, context menu, AI placement
+- **Node connections:** ReactFlow connectors for relational mapping
+- **Selection:** Single/multi-select with keyboard modifiers
+- **Context menu:** Right-click for node actions
+- **Zoom/Pan:** Standard ReactFlow controls + minimap
+- **Persistence:** Server-side via Dev 3 (canvas metadata, versions, snapshots)
+
+### 7.3 Interaction Model
+
+| Action | Source |
+|--------|--------|
+| "Add result to board" | Live AI Results panel |
+| "Add section to board" | Live AI Results panel |
+| "Add citation to board" | Live AI Results panel |
+| Drag node to canvas | Results panel, source panel |
+| Connect nodes | Board interaction |
+| Context menu actions | Board interaction |
+| AI placement | Chat response → concept/asset cards |
+
+### 7.4 Post-VI Marketing Flow
+
+After Visual Identity is validated on the board:
+1. Board state is analyzed by AI orchestrator
+2. Marketing flow is generated as a connected node graph
+3. Components on the board become reusable resources
+4. Flow can be exported (PDF/SVG/PNG/JPG)
+
+---
+
+## 8. AI Chat Specification
+
+### 8.1 Conversation Model
+
+- **Multi-turn dialogue** with full workspace context
+- Access to all uploaded sources, board state, and previous conversation history
+- Drafts preserved when chat is closed
+
+### 8.2 Board Element Interaction
+
+- Users can **select board elements** and ask AI to act on them
+- Examples:
+  - Select a logo → "make this more minimal"
+  - Select a color palette → "apply this to the brand guidelines"
+  - Select a concept card → "expand on this direction"
+
+### 8.3 Chat Output Placement
+
+AI responses can land on the board as:
+- `chat-response` nodes (conversation display)
+- `concept-card` nodes (brand direction concepts)
+- `asset-card` nodes (generated visual assets)
+
+---
+
+## 9. Export System
+
+### 9.1 Formats
+
+| Format | Use Case |
+|--------|----------|
+| **PDF** | Brand Document, presentations, print-ready assets |
+| **SVG** | Scalable logos, icons, vector assets |
+| **PNG** | Rasterized assets for web/social |
+| **JPG** | Compressed raster for email/social |
+
+### 9.2 Export Scope
+
+| Scope | Description |
+|-------|-------------|
+| **Full Brand Document** | Compiled artifact of all generated identity elements |
+| **Single element** | Individual logo, palette, typography sample, or any board element |
+
+### 9.3 Implementation
+
+- `jsPDF` for client-side PDF generation
+- Export worker (FastAPI, merged into AI services) for heavy processing
+- Export requested via NATS, result stored in MinIO
+
+---
+
+## 10. Authentication & Authorization
+
+### 10.1 Auth Flow
+
+- Email/password registration and login
+- JWT token issued on successful auth
+- Token injected in HTTP headers for all API calls
+- Token refresh mechanism (TBD implementation details)
+
+### 10.2 Access Model
+
+| Level | Scope |
+|-------|-------|
+| **Organization** | Top-level grouping |
+| **Workspace** | Project-level container within org |
+| **Source** | Individual uploaded document within workspace |
+
+### 10.3 Sharing
+
+- Invited users only — no public links
+- No RBAC (single permission level)
+- Shared workspace access via `shared.$token` route
+
+---
+
+## 11. Responsive Strategy
+
+### 11.1 Approach
+
+- **Desktop-first**, all devices supported
+- Design is **evolving** — do not lock to current `design.md` mobile patterns
+- Always online (no offline requirement)
+
+### 11.2 Breakpoints (Reference)
+
+| Name | Width | Key Changes |
+|------|-------|-------------|
+| Small phone | ≤ 419px | Single-column, hero drops to 28px |
+| Phone | 420–640px | Single-column, hero at 34px |
+| Large phone | 641–735px | Tighter padding (48px vs 80px) |
+| Tablet portrait | 736–833px | Nav collapses to hamburger |
+| Tablet landscape | 834–1023px | 3-col → 2-col grids |
+| Small desktop | 1024–1068px | 2/3 width tiles |
+| Desktop | 1069–1440px | Full layout, 4–5 col grids |
+| Wide desktop | ≥ 1441px | Content locks at 1440px |
+
+### 11.3 Mobile UX Pattern
+
+- Three-column layout (Sources | Board | AI Results) collapses to single-column
+- Side panels become Sheet overlays
+- Floating chat remains accessible
+- Board is full-width with swipe/pan navigation
+
+---
+
+## 12. Known Technical Debt
+
+### 12.1 Contract System
+
+| Aspect | Status |
+|--------|--------|
+| Canonical schemas | 11 JSON Schemas in `packages/contracts/json-schema/` |
+| Code generation | json2ts (TS), datamodel-code-generator (Python) |
+| Frontend consumption | **None** — `@ppp/contracts` not imported |
+| Backend consumption | **None** — manually duplicated types |
+| AI consumption | **Partial** — vendored copies with parity tests |
+| CI validation | **None** — `validate:schemas` script exists but no CI evidence |
+
+### 12.2 Testing Gap
+
+| Repo | Framework | Status |
+|------|-----------|--------|
+| ppp-frontend | None | **Zero tests** — no framework configured |
+| ppp-backend | Jest | Active — 27 spec files |
+| ppp-ai-services | pytest | Active — 13 test files |
+
+### 12.3 Documentation
+
+- No `AGENTS.md` or `CONTRIBUTING.md` exists
+- Closest: `SKILLS.md` (frontend constraints), `ARCHITECTURE.md` (backend), `TEAM_WORKSTREAMS.md` (ownership)
+
+### 12.4 Type Divergence
+
+- Backend's `AiTaskNewEvent` has different fields than contract's `AITaskRequest`
+- Backend event interfaces are hand-written, not generated
+- Frontend API types defined independently
+
+---
+
+## 13. Quality Targets (TBD)
+
+| Category | Status |
+|----------|--------|
+| **Performance** | TBD — No Lighthouse/LCP/TTI targets defined |
+| **Accessibility** | TBD — WCAG 2.1 AA recommended but not enforced |
+| **Browser support** | TBD — Recommend last 2 versions of Chrome, Firefox, Safari, Edge |
+| **SEO** | N/A — Behind authentication |
+| **Lighthouse score** | TBD — Recommend 90+ performance, 95+ accessibility |
+
+---
+
+## 14. Dev 3 Boundaries
+
+> Clear delineation of frontend vs NestJS (Dev 3) responsibility.
+
+### 14.1 Dev 3 Responsibility (NestJS Backend)
+
+| Feature | Owner |
+|---------|-------|
+| Canvas state management | Dev 3 |
+| Canvas metadata persistence | Dev 3 |
+| Canvas versions and snapshots | Dev 3 |
+| Collaboration sessions | Dev 3 |
+| Presence indicators | Dev 3 |
+| Real-time cursors | Dev 3 |
+| Workspace CRUD | Dev 3 |
+| Organization management | Dev 3 |
+| Authentication/authorization | Dev 3 |
+| Document storage (MinIO) | Dev 3 |
+| NATS messaging | Dev 3 |
+| Database (TypeORM) | Dev 3 |
+
+### 14.2 Frontend Responsibility
+
+| Feature | Owner |
+|---------|--------|
+| UI rendering (all visual components) | Frontend |
+| ReactFlow board rendering | Frontend |
+| Presence/cursor display (state from Dev 3) | Frontend |
+| API integration layer | Frontend |
+| Auth token management | Frontend |
+| Responsive layout | Frontend |
+| Export UI triggers | Frontend |
+| Chat UI rendering | Frontend |
+
+### 14.3 AI Services Responsibility
+
+| Feature | Owner |
+|---------|-------|
+| Document extraction | AI Services |
+| Embedding + RAG pipeline | AI Services |
+| Model routing | AI Services |
+| Agent management | AI Services |
+| Web research/crawling | AI Services |
+| Export processing | AI Services |
+| AI output generation (concepts, assets) | AI Services |
+
+---
+
+## 15. Non-Negotiables
+
+### 15.1 Design System Adherence
+
+- **Single accent color:** `{colors.primary}` (#0066cc) for all interactive elements — no exceptions
+- **Typography hierarchy:** SF Pro Display for headlines (600 weight, negative letter-spacing), SF Pro Text for body (400 weight, 17px)
+- **Elevation rules:** Exactly ONE drop-shadow (product renders only). No shadows on cards, buttons, or text
+- **Surface alternation:** Light/dark tile alternation as section divider — no borders or shadows for separation
+- **Radius grammar:** pill for CTAs, sm for compact utility, lg for cards — no mixing
+
+### 15.2 ReactFlow Preservation
+
+- ReactFlow is the **core compositional engine** — must not be replaced
+- Board generates marketing flow after VI validation
+- Every component created serves as a resource for VI finalization
+- Node types must support the full range of user-created, source-derived, RAG, and AI-generated content
+
+### 15.3 Quality Bar
+
+- Body copy at **17px**, not 16px — the extra pixel defines brand reading pace
+- Weight ladder: **300/400/600/700** — weight 500 is deliberately absent
+- Active state: `transform: scale(0.95)` on every button — system-wide micro-interaction
+- Touch targets: Minimum 44×44px
+- No decorative gradients — atmosphere comes from photography
+- No rounded full-bleed tiles — rectangular and edge-to-edge
+
+---
+
+## Appendix A: Design Token Quick Reference
+
+```css
+/* Colors */
+--color-primary: #0066cc;
+--color-primary-focus: #0071e3;
+--color-primary-on-dark: #2997ff;
+--color-ink: #1d1d1f;
+--color-canvas: #ffffff;
+--color-canvas-parchment: #f5f5f7;
+--color-surface-tile-1: #272729;
+--color-surface-black: #000000;
+
+/* Typography */
+--font-display: "SF Pro Display", system-ui, -apple-system, sans-serif;
+--font-body: "SF Pro Text", system-ui, -apple-system, sans-serif;
+
+/* Spacing */
+--spacing-section: 80px;
+--spacing-lg: 24px;
+--spacing-md: 17px;
+
+/* Border Radius */
+--radius-pill: 9999px;
+--radius-lg: 18px;
+--radius-sm: 8px;
+
+/* Elevation */
+--shadow-product: rgba(0, 0, 0, 0.22) 3px 5px 30px 0;
+```
+
+---
+
+## Appendix B: NATS Subject Reference
+
+Canonical subjects defined in `packages/contracts/nats-subjects.json` (27 subjects).
+
+Key subjects for frontend awareness:
+- `workspace.source.process.requested` — Triggered on file upload
+- `ai.task.requested` — AI processing request
+- `ai.task.completed` — AI processing result
+- `canvas.analysis.requested` — Board analysis request
+- `export.requested` — Export job request
+
+---
+
+*End of CAHIER DES CHARGES.*
+

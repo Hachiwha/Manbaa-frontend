@@ -183,7 +183,7 @@ export function ChatPanel({
               </span>
               <button
                 onClick={() => setShowRules(false)}
-                className="rounded-md p-1 hover:bg-surface-2"
+                className="rounded-md p-1 transition-colors active:scale-90 hover:bg-surface-2"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -206,7 +206,7 @@ export function ChatPanel({
                       <button
                         onClick={() => toggleRule(rule.id)}
                         className={cn(
-                          "shrink-0 transition-colors",
+                          "shrink-0 transition-colors active:scale-90",
                           rule.active ? "text-primary" : "text-muted-foreground"
                         )}
                       >
@@ -216,7 +216,7 @@ export function ChatPanel({
                     <div className="flex items-center justify-end">
                       <button
                         onClick={() => deleteRule(rule.id)}
-                        className="rounded p-1 text-muted-foreground opacity-0 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                        className="rounded p-1 text-muted-foreground opacity-0 transition-colors active:scale-90 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -238,7 +238,7 @@ export function ChatPanel({
                 <button
                   onClick={addRule}
                   disabled={!newRule.trim()}
-                  className="absolute bottom-2 right-2 rounded-md bg-primary p-1.5 text-primary-foreground shadow-sm hover:scale-105 disabled:opacity-50"
+                  className="absolute bottom-2 right-2 rounded-md bg-primary p-1.5 text-primary-foreground transition-transform active:scale-95 hover:bg-primary/90 disabled:opacity-50"
                 >
                   <PlusCircle className="h-4 w-4" />
                 </button>
@@ -263,14 +263,14 @@ export function ChatPanel({
           <button 
             onClick={() => setShowRules(true)}
             className={cn(
-              "grid h-7 w-7 place-items-center rounded-md transition-colors",
+              "grid h-7 w-7 place-items-center rounded-md transition-colors active:scale-90",
               showRules ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-surface hover:text-foreground"
             )}
             title="AI Rules"
           >
             <Settings2 className="h-4 w-4" />
           </button>
-          <button className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface hover:text-foreground">
+          <button className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors active:scale-90 hover:bg-surface hover:text-foreground">
             <MoreHorizontal className="h-4 w-4" />
           </button>
         </div>
@@ -302,8 +302,8 @@ export function ChatPanel({
 
       {/* Composer */}
       <div className="mx-auto mb-5 w-full max-w-3xl px-6">
-        <div className="group flex items-end gap-2 rounded-2xl border border-border bg-surface p-2 shadow-[var(--shadow-elevated)] transition-colors focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15">
-          <button className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-surface-2 hover:text-foreground">
+        <div className="group flex items-end gap-2 rounded-2xl border border-border bg-surface p-2 shadow-[var(--shadow-hairline)] transition-colors focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15">
+          <button className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors active:scale-90 hover:bg-surface-2 hover:text-foreground">
             <Paperclip className="h-4 w-4" />
           </button>
           <textarea
@@ -327,13 +327,13 @@ export function ChatPanel({
             type="button"
             onClick={send}
             disabled={!draft.trim() || sending}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-[var(--shadow-glow)] transition-all hover:scale-[1.04] disabled:cursor-not-allowed disabled:opacity-40 disabled:saturate-50"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground transition-all active:scale-95 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-40 disabled:saturate-50"
           >
             <ArrowUp className="h-4 w-4" strokeWidth={2.5} />
           </button>
         </div>
         <p className="mt-2 text-center text-[10px] text-muted-foreground">
-          FlowForge can be inaccurate; please double-check generated steps before exporting.
+          Manbaa can be inaccurate; please double-check generated steps before exporting.
         </p>
       </div>
     </section>
@@ -347,7 +347,7 @@ function ModeBadge({ mode }: { mode: "AUTO" | "INTERACTIVE" }) {
       className={`flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
         isAuto
           ? "border-accent/40 bg-accent/10 text-accent"
-          : "border-primary/40 bg-primary/10 text-primary-glow"
+          : "border-primary/40 bg-primary/10 text-primary"
       }`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${isAuto ? "bg-accent" : "bg-primary"}`} />
@@ -360,7 +360,7 @@ function QuickPill({ icon: Icon, label, onClick }: { icon: any; label: string; o
   return (
     <button 
       onClick={onClick}
-      className="flex items-center gap-1.5 shrink-0 rounded-full border border-border bg-surface px-3 py-1 text-[11px] text-muted-foreground transition-colors hover:border-border-strong hover:bg-surface-2 hover:text-foreground"
+      className="flex items-center gap-1.5 shrink-0 rounded-full border border-border bg-surface px-3 py-1 text-[11px] text-muted-foreground transition-colors active:scale-95 hover:border-border-strong hover:bg-surface-2 hover:text-foreground"
     >
       <Icon className="h-3 w-3" />
       {label}
@@ -396,8 +396,8 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         <div
           className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
             isUser
-              ? "bg-gradient-to-br from-primary to-accent text-primary-foreground"
-              : "bg-surface-2 text-primary-glow"
+              ? "bg-primary text-primary-foreground"
+              : "bg-surface-2 text-primary"
           }`}
         >
           {isUser ? <span className="text-[10px] font-bold">MA</span> : <Bot className="h-4 w-4" />}
@@ -422,8 +422,8 @@ function MessageBubble({ message }: { message: ChatMessage }) {
       <div
         className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${
           isUser
-            ? "bg-gradient-to-br from-primary to-accent text-primary-foreground"
-            : "bg-surface-2 text-primary-glow"
+            ? "bg-primary text-primary-foreground"
+            : "bg-surface-2 text-primary"
         }`}
       >
         {isUser ? <span className="text-[10px] font-bold">MA</span> : <Bot className="h-4 w-4" />}
@@ -433,7 +433,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         <div
           className={`rounded-2xl border px-4 py-3 text-[13.5px] leading-relaxed ${
             isUser
-              ? "border-primary/30 bg-gradient-to-br from-primary/25 to-primary/10 text-foreground"
+              ? "border-primary/30 bg-primary/12 text-foreground"
               : "border-border bg-surface text-foreground/95"
           }`}
         >

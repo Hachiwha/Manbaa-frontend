@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TopBar } from "@/components/shell/TopBar";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SourcesPanel } from "@/features/workspace/components/SourcesPanel";
 import { ChatPanel } from "@/features/workspace/components/ChatPanel";
 import { WorkflowPreview } from "@/features/workspace/components/WorkflowPreview";
@@ -13,6 +14,7 @@ import {
   listSessionMessages,
   getWorkflowDiagramData,
   getWorkflow,
+  patchWorkflow,
 } from "@/lib/api";
 import {
   MOCK_VERSIONS,
@@ -27,7 +29,10 @@ export const Route = createFileRoute("/workspace/$sessionId")({
 
 function WorkspacePage() {
   const { sessionId } = Route.useParams();
+  const queryClient = useQueryClient();
   const [selectedNodeForChat, setSelectedNodeForChat] = useState<FlowNode | null>(null);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
+  const [boardOpen, setBoardOpen] = useState(false);
 
   const { data: sessionData } = useQuery({
     queryKey: ["session", sessionId],
@@ -123,7 +128,17 @@ function WorkspacePage() {
     [messagesData]
   );
 
-  const workflowTitle = workflowData?.title ?? "Untitled Workflow";
+  const renameMutation = useMutation({
+    mutationFn: (title: string) => {
+      if (!workflowId) return Promise.reject(new Error("No workflow to rename"));
+      return patchWorkflow(workflowId, { title });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] });
+    },
+  });
+
+  const workflowTitle = workflowData?.title ?? "Untitled brand project";
   const sessionMode = (sessionData?.mode === "auto" ? "AUTO" : "INTERACTIVE") as "AUTO" | "INTERACTIVE";
 
   // Convert real workflow-state elementsJson into React Flow nodes/edges
@@ -152,25 +167,71 @@ function WorkspacePage() {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <TopBar searchPlaceholder="Search this session…" />
+      <TopBar
+        variant="workspace"
+        workflowId={workflowId}
+        projectName={workflowTitle}
+        onRenameProject={workflowId ? (title) => renameMutation.mutate(title) : undefined}
+        sourcesOpen={sourcesOpen}
+        onToggleSources={() => setSourcesOpen((v) => !v)}
+        boardOpen={boardOpen}
+        onToggleBoard={() => setBoardOpen((v) => !v)}
+      />
       <div className="flex min-h-0 flex-1">
-        <SourcesPanel sources={sources} versions={versions} />
-        <ChatPanel 
-          messages={messages} 
-          workflowTitle={workflowTitle} 
-          mode={sessionMode} 
-          sessionId={sessionId} 
+        {/* Desktop (>=1024px): Sources + Board render inline alongside Chat. */}
+        <div className="hidden lg:block lg:shrink-0">
+          <SourcesPanel sources={sources} versions={versions} sessionId={sessionId} workflowId={workflowId} />
+        </div>
+
+        <ChatPanel
+          messages={messages}
+          workflowTitle={workflowTitle}
+          mode={sessionMode}
+          sessionId={sessionId}
           selectedNodeForChat={selectedNodeForChat}
           onClearSelectedNode={() => setSelectedNodeForChat(null)}
         />
-        <WorkflowPreview 
-          nodes={flowNodes}
-          edges={flowEdges}
-          workflowData={aiResponse}
-          workflowId={workflowId}
-          onChooseNodeInChat={setSelectedNodeForChat}
-        />
+
+        <div className="hidden lg:block lg:shrink-0">
+          <WorkflowPreview
+            nodes={flowNodes}
+            edges={flowEdges}
+            workflowData={aiResponse}
+            workflowId={workflowId}
+            onChooseNodeInChat={setSelectedNodeForChat}
+          />
+        </div>
       </div>
+
+      {/* Mobile/tablet (<1024px): Sources + Board collapse into off-canvas sheets, opened from the TopBar. */}
+      <Sheet open={sourcesOpen} onOpenChange={setSourcesOpen}>
+        <SheetContent side="left" className="w-[85vw] max-w-sm p-0 sm:max-w-sm lg:hidden">
+          <SourcesPanel
+            sources={sources}
+            versions={versions}
+            sessionId={sessionId}
+            workflowId={workflowId}
+            onCollapse={() => setSourcesOpen(false)}
+            className="w-full border-r-0"
+          />
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={boardOpen} onOpenChange={setBoardOpen}>
+        <SheetContent side="right" className="w-[92vw] max-w-xl p-0 sm:max-w-xl lg:hidden">
+          <WorkflowPreview
+            nodes={flowNodes}
+            edges={flowEdges}
+            workflowData={aiResponse}
+            workflowId={workflowId}
+            onChooseNodeInChat={(node) => {
+              setSelectedNodeForChat(node);
+              setBoardOpen(false);
+            }}
+            className="w-full border-l-0"
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

@@ -37,9 +37,9 @@ export const StepNode = memo(({ data, selected }: NodeProps<FlowStepData>) => {
 
   return (
     <div
-      className={`group relative w-[260px] overflow-hidden rounded-xl border bg-card/95 backdrop-blur transition-all ${
+      className={`group relative w-[260px] overflow-hidden rounded-xl border-2 bg-card/95 backdrop-blur transition-all ${
         selected || data.active
-          ? "border-primary shadow-[0_0_0_1px_var(--primary),0_12px_40px_-10px_color-mix(in_oklab,var(--primary)_60%,transparent)]"
+          ? "border-primary"
           : `${tone.ring} hover:border-border-strong`
       }`}
     >
@@ -59,7 +59,7 @@ export const StepNode = memo(({ data, selected }: NodeProps<FlowStepData>) => {
       <div className="flex items-start gap-3 p-3.5">
         <div
           className={`grid h-9 w-9 shrink-0 place-items-center rounded-lg ${
-            data.active ? "bg-gradient-primary text-primary-foreground" : "bg-surface-2 text-primary-glow"
+            data.active ? "bg-primary text-primary-foreground" : "bg-surface-2 text-primary"
           }`}
         >
           <Icon className="h-4 w-4" />
@@ -84,7 +84,7 @@ export const StepNode = memo(({ data, selected }: NodeProps<FlowStepData>) => {
           <ul className="space-y-1">
             {data.subItems.map((s) => (
               <li key={s} className="flex items-center gap-1.5 text-[11.5px] text-foreground/85">
-                <CheckCircle2 className="h-3 w-3 text-primary-glow" />
+                <CheckCircle2 className="h-3 w-3 text-primary" />
                 {s}
               </li>
             ))}

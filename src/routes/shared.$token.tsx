@@ -41,7 +41,7 @@ function SharedWorkflowPage() {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-2 text-destructive">
-          <p className="text-xl font-semibold">Workflow not found</p>
+          <p className="text-xl font-semibold">Brand project not found</p>
           <p className="text-sm">The share link may be invalid or has expired.</p>
         </div>
       </div>
@@ -54,12 +54,13 @@ function SharedWorkflowPage() {
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <TopBar />
+      <TopBar variant="minimal" title={workflowData.title} />
       <div className="flex flex-1 overflow-hidden">
         <WorkflowPreview
           nodes={nodes}
           edges={edges}
           workflowData={workflowData.elementsJson}
+          className="w-full border-l-0 lg:w-full"
         />
       </div>
     </div>

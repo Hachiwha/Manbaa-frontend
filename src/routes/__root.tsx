@@ -32,11 +32,11 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "FlowForge — AI Workflow Studio" },
-      { name: "description", content: "Design, refine and export AI-powered business workflows with a 3-column sources / chat / live diagram workspace." },
-      { name: "author", content: "FlowForge" },
-      { property: "og:title", content: "FlowForge — AI Workflow Studio" },
-      { property: "og:description", content: "Design, refine and export AI-powered business workflows in real time." },
+      { title: "Manbaa" },
+      { name: "description", content: "Generate and refine brand identities with AI — sources, chat, and a live sketch board in one workspace." },
+      { name: "author", content: "Manbaa" },
+      { property: "og:title", content: "Manbaa" },
+      { property: "og:description", content: "Generate and refine brand identities with AI, in real time." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
@@ -55,7 +55,7 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <head>
         <HeadContent />
       </head>

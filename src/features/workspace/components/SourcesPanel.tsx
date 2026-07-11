@@ -19,6 +19,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { uploadDocument, deleteDocument, reprocessDocument } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import type { SourceType, VersionEntry, WorkspaceSource } from "../types";
 import {
   ACCEPT_ATTRIBUTE,
@@ -34,13 +35,7 @@ const typeIcon: Record<SourceType, typeof FileText> = {
   audio: Music2,
 };
 
-const typeTone: Record<SourceType, string> = {
-  pdf: "text-rose-300 bg-rose-500/10",
-  image: "text-emerald-300 bg-emerald-500/10",
-  text: "text-sky-300 bg-sky-500/10",
-  doc: "text-violet-300 bg-violet-500/10",
-  audio: "text-amber-300 bg-amber-500/10",
-};
+const typeTone = "text-ink-muted-80 bg-surface-2";
 
 function newSourceId() {
   return globalThis.crypto?.randomUUID?.() ?? `src_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -52,9 +47,10 @@ interface SourcesPanelProps {
   onCollapse?: () => void;
   sessionId?: string;
   workflowId?: string;
+  className?: string;
 }
 
-export function SourcesPanel({ sources: initialSources, versions, onCollapse, sessionId, workflowId }: SourcesPanelProps) {
+export function SourcesPanel({ sources: initialSources, versions, onCollapse, sessionId, workflowId, className }: SourcesPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
   const [items, setItems] = useState(initialSources);
@@ -190,7 +186,7 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
   const filtered = items.filter((s) => s.name.toLowerCase().includes(filter.toLowerCase()));
 
   return (
-    <aside className="flex h-full w-[280px] flex-col border-r border-border bg-gradient-surface">
+    <aside className={cn("flex h-full w-full flex-col border-r border-border bg-surface lg:w-[clamp(240px,22vw,300px)]", className)}>
       <input
         ref={fileInputRef}
         type="file"
@@ -213,7 +209,7 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
         <button
           type="button"
           onClick={onCollapse}
-          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors active:scale-95 hover:bg-surface-2 hover:text-foreground"
           aria-label="Collapse sidebar"
         >
           <PanelLeftClose className="h-4 w-4" />
@@ -224,7 +220,7 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="group flex w-full items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-medium text-primary-foreground/95 transition-all hover:border-primary/60 hover:bg-primary/20"
+          className="group flex w-full items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm font-medium text-primary-foreground/95 transition-all active:scale-[0.98] hover:border-primary/60 hover:bg-primary/20"
         >
           <Plus className="h-4 w-4 text-primary" />
           <span className="text-foreground">Add sources</span>
@@ -259,7 +255,7 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
                 >
                   <div className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors hover:bg-surface-2">
                     <span
-                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-md ${typeTone[s.type]}`}
+                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-md ${typeTone}`}
                     >
                       <Icon className="h-3.5 w-3.5" />
                     </span>
@@ -272,7 +268,7 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
                       <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                         <span>{s.size}</span>
                         {s.status === "uploading" && (
-                          <span className="flex items-center gap-1 text-primary-glow">
+                          <span className="flex items-center gap-1 text-primary">
                             <Loader2 className="h-2.5 w-2.5 animate-spin" />
                             uploading
                           </span>
@@ -290,7 +286,7 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
                       onClick={() => toggleIncluded(s.id)}
                       aria-label={s.included ? "Exclude from workspace" : "Include in workspace"}
                       aria-pressed={s.included}
-                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-md border transition-all ${
+                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-md border transition-all active:scale-90 ${
                         s.included
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-border-strong text-muted-foreground hover:border-border-strong hover:text-foreground"
@@ -302,7 +298,7 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
                       type="button"
                       onClick={() => removeSource(s.id)}
                       aria-label={`Remove ${s.name}`}
-                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground opacity-70 transition-colors hover:bg-destructive/15 hover:text-destructive group-hover/row:opacity-100"
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground opacity-70 transition-colors active:scale-90 hover:bg-destructive/15 hover:text-destructive group-hover/row:opacity-100"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -346,7 +342,7 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
             <li key={v.id}>
               <button
                 type="button"
-                className={`flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-[12px] transition-colors ${
+                className={`flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-[12px] transition-colors active:scale-[0.98] ${
                   v.active
                     ? "bg-primary/15 text-foreground"
                     : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"
@@ -354,7 +350,7 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
               >
                 <span className="flex items-center gap-2">
                   <span
-                    className={`h-1.5 w-1.5 rounded-full ${v.active ? "bg-primary shadow-[0_0_8px_var(--primary)]" : "bg-border-strong"}`}
+                    className={`h-1.5 w-1.5 rounded-full ${v.active ? "bg-primary" : "bg-border-strong"}`}
                   />
                   {v.label}
                 </span>
@@ -367,13 +363,13 @@ export function SourcesPanel({ sources: initialSources, versions, onCollapse, se
 
       <div className="border-t border-border px-3 py-2">
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-          <button type="button" className="flex items-center gap-1.5 rounded-md px-2 py-1 hover:text-foreground">
+          <button type="button" className="flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors active:scale-95 hover:text-foreground">
             <BookOpen className="h-3.5 w-3.5" /> Docs
           </button>
-          <button type="button" className="flex items-center gap-1.5 rounded-md px-2 py-1 hover:text-foreground">
+          <button type="button" className="flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors active:scale-95 hover:text-foreground">
             <HelpCircle className="h-3.5 w-3.5" /> Help
           </button>
-          <button type="button" className="flex items-center gap-1 rounded-md px-2 py-1 hover:text-foreground">
+          <button type="button" className="flex items-center gap-1 rounded-md px-2 py-1 transition-colors active:scale-95 hover:text-foreground">
             More <ChevronRight className="h-3 w-3" />
           </button>
         </div>

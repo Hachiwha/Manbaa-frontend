@@ -39,6 +39,7 @@ interface WorkflowPreviewProps {
   accuracy?: "Low" | "Medium" | "High";
   onChooseNodeInChat?: (node: FlowNode) => void;
   workflowId?: string;
+  className?: string;
 }
 
 
@@ -67,17 +68,16 @@ function minimapColor(node: Node) {
     const d = node.data as RfFlowNodeData;
     switch (d.kind) {
       case "rfDecision":
-        return "#f59e0b";
+        return "var(--warning)";
       case "rfTask":
-        return d.variant === "taskSystem" ? "#06b6d4" : "#8b5cf6";
+        return d.variant === "taskSystem" ? "var(--ink-muted-48)" : "var(--primary)";
       case "rfStart":
-        return "#10b981";
       case "rfEnd":
-        return "#34d399";
+        return "var(--success)";
       case "rfStub":
-        return "#f97316";
+        return "var(--warning)";
       default:
-        return "#6366f1";
+        return "var(--primary)";
     }
   }
   return "var(--primary)";
@@ -142,7 +142,7 @@ function FlowDiagram({
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="pointer-events-auto absolute left-3 top-3 z-10 w-[280px] max-h-[min(420px,70vh)] overflow-y-auto rounded-lg border border-border bg-popover p-3 shadow-[var(--shadow-elevated)] scrollbar-thin"
+          className="pointer-events-auto absolute left-3 top-3 z-10 w-[280px] max-h-[min(420px,70vh)] overflow-y-auto rounded-lg border border-border bg-popover p-3 shadow-[var(--shadow-hairline)] scrollbar-thin"
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -151,7 +151,7 @@ function FlowDiagram({
             <button
               type="button"
               onClick={() => setSelected(null)}
-              className="text-[10px] text-muted-foreground hover:text-foreground"
+              className="text-[10px] text-muted-foreground transition-colors active:scale-95 hover:text-foreground"
             >
               Close
             </button>
@@ -256,6 +256,7 @@ export function WorkflowPreview({
   accuracy = "High",
   onChooseNodeInChat,
   workflowId,
+  className,
 }: WorkflowPreviewProps) {
   const [selected, setSelected] = useState<FlowNode | null>(null);
   const [contextMenu, setContextMenu] = useState<{ node: FlowNode; position: { x: number; y: number } } | null>(null);
@@ -377,7 +378,7 @@ export function WorkflowPreview({
     >
       <div className="flex items-center gap-2">
         <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          Workflow Preview
+          Sketch Board
         </span>
         <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
           AI flow
@@ -387,7 +388,7 @@ export function WorkflowPreview({
         <button
           type="button"
           onClick={() => setShareModalOpen(true)}
-          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors active:scale-90 hover:bg-surface-2 hover:text-foreground"
           aria-label="Share diagram"
         >
           <Share2 className="h-3.5 w-3.5" />
@@ -395,7 +396,7 @@ export function WorkflowPreview({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors active:scale-90 hover:bg-surface-2 hover:text-foreground"
           aria-label={fullscreen ? "Exit full screen" : "Expand diagram"}
         >
           {fullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
@@ -421,7 +422,7 @@ export function WorkflowPreview({
           type="button"
           onClick={handleExportBPMN}
           disabled={isExporting}
-          className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface text-[11px] font-semibold text-foreground/85 transition-colors hover:bg-surface-2 disabled:opacity-50"
+          className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface text-[11px] font-semibold text-foreground/85 transition-all active:scale-[0.98] hover:bg-surface-2 disabled:opacity-50"
         >
           {isExporting ? (
             <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -433,14 +434,14 @@ export function WorkflowPreview({
         <button
           type="button"
           onClick={handleCopyWorkflow}
-          className="group flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-primary text-[11px] font-semibold text-primary-foreground shadow-[var(--shadow-glow)] transition-all hover:scale-[1.02]"
+          className="group flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary text-[11px] font-semibold text-primary-foreground transition-all active:scale-95 hover:bg-primary/90"
         >
           {copied ? (
             <Check className="h-3.5 w-3.5" />
           ) : (
             <FileJson className="h-3.5 w-3.5 transition-transform group-hover:scale-110" />
           )}
-          {copied ? "Copié !" : "Exporter Workflow"}
+          {copied ? "Copié !" : "Exporter le projet"}
         </button>
       </div>
 
@@ -448,7 +449,7 @@ export function WorkflowPreview({
   );
 
   const flowShell = () => (
-    <div className="relative min-h-0 flex-1 bg-mesh">
+    <div className="relative min-h-0 flex-1 bg-background">
       <ReactFlowProvider key={layoutKey}>
         <div className="absolute inset-0">
           <FlowDiagram
@@ -482,8 +483,9 @@ export function WorkflowPreview({
     <>
       <aside
         className={cn(
-          "flex h-full min-h-0 w-[420px] shrink-0 flex-col border-l border-border bg-gradient-surface",
+          "flex h-full min-h-0 w-full shrink-0 flex-col border-l border-border bg-surface lg:w-[clamp(340px,30vw,440px)]",
           expanded && "pointer-events-none invisible",
+          className,
         )}
         aria-hidden={expanded}
       >
