@@ -1,22 +1,35 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Send, Sparkles, Copy, Trash2, BringToFront, SendToBack } from "lucide-react";
+import {
+  Send,
+  Sparkles,
+  Copy,
+  Trash2,
+  BringToFront,
+  SendToBack,
+} from "lucide-react";
 import type { FlowNode } from "../types";
 
 interface NodeContextMenuProps {
   node: FlowNode;
   position: { x: number; y: number };
   onClose: () => void;
-  onAddComment: (nodeId: string) => void;
   onChooseInChat: (node: FlowNode) => void;
+  onDuplicate?: (nodeId: string) => void;
+  onDelete?: (nodeId: string) => void;
+  onBringToFront?: (nodeId: string) => void;
+  onSendToBack?: (nodeId: string) => void;
 }
 
 export function NodeContextMenu({
   node,
   position,
   onClose,
-  onAddComment,
   onChooseInChat,
+  onDuplicate,
+  onDelete,
+  onBringToFront,
+  onSendToBack,
 }: NodeContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -33,14 +46,40 @@ export function NodeContextMenu({
   const nodeTitle = node.data?.title || node.id;
 
   const menuItems = [
-    { icon: Copy, label: "Duplicate", shortcut: "Ctrl+D", onClick: () => {} },
-    { icon: Trash2, label: "Delete", shortcut: "Del", onClick: () => {} },
-    { icon: BringToFront, label: "Bring to front", onClick: () => {} },
-    { icon: SendToBack, label: "Send to back", onClick: () => {} },
+    {
+      icon: Copy,
+      label: "Duplicate",
+      shortcut: "Ctrl+D",
+      onClick: () => onDuplicate?.(node.id),
+    },
+    {
+      icon: Trash2,
+      label: "Delete",
+      shortcut: "Del",
+      onClick: () => onDelete?.(node.id),
+    },
+    {
+      icon: BringToFront,
+      label: "Bring to front",
+      onClick: () => onBringToFront?.(node.id),
+    },
+    {
+      icon: SendToBack,
+      label: "Send to back",
+      onClick: () => onSendToBack?.(node.id),
+    },
     { separator: true },
-    { icon: MessageSquare, label: "Add comment", onClick: () => { onAddComment(node.id); onClose(); } },
-    { icon: Send, label: "Choose in chat", onClick: () => { onChooseInChat(node); onClose(); } },
-    { icon: Sparkles, label: "Ask AI about this", accent: true, onClick: () => { onChooseInChat(node); onClose(); } },
+    {
+      icon: Send,
+      label: "Choose in chat",
+      onClick: () => onChooseInChat(node),
+    },
+    {
+      icon: Sparkles,
+      label: "Ask AI about this",
+      accent: true,
+      onClick: () => onChooseInChat(node),
+    },
   ] as const;
 
   return (
@@ -74,17 +113,23 @@ export function NodeContextMenu({
                     : "text-popover-foreground hover:bg-accent"
                 }`}
               >
-                <Icon className={`h-4 w-4 ${"accent" in item && item.accent ? "text-primary" : ""}`} />
+                <Icon
+                  className={`h-4 w-4 ${"accent" in item && item.accent ? "text-primary" : ""}`}
+                />
                 <span className="flex-1 text-left">{item.label}</span>
                 {"shortcut" in item && item.shortcut && (
-                  <span className="text-fine-print text-ink-muted-48">{item.shortcut}</span>
+                  <span className="text-fine-print text-ink-muted-48">
+                    {item.shortcut}
+                  </span>
                 )}
               </button>
             );
           })}
         </div>
         <div className="border-t border-hairline px-3 py-1.5">
-          <p className="truncate text-fine-print text-ink-muted-48">{nodeTitle as string}</p>
+          <p className="truncate text-fine-print text-ink-muted-48">
+            {nodeTitle as string}
+          </p>
         </div>
       </motion.div>
     </AnimatePresence>

@@ -144,7 +144,15 @@ function LibraryRow({ workflow }: { workflow: WorkflowListItem }) {
   return (
     <tr
       onClick={open}
-      className="cursor-pointer border-b border-hairline last:border-0 transition-colors hover:bg-surface-pearl/60"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          open();
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      className="cursor-pointer border-b border-hairline outline-none last:border-0 transition-colors hover:bg-surface-pearl/60 focus-visible:bg-surface-pearl/60 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-inset"
     >
       <td className="px-4 py-3 text-body text-ink">
         <span className="font-medium">{workflow.title}</span>

@@ -1,0 +1,27 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # VITE_* vars are baked into the client bundle at build time (Vite),
+        # not read at container start — change these and rebuild, don't
+        # expect `environment:` below to override them.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000}
+        VITE_API_PREFIX: ${VITE_API_PREFIX:-/api}
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  # Uncomment once ppp-backend (NestJS) is available alongside this repo,
+  # then set VITE_API_BASE_URL=http://backend:3000 and VITE_API_PREFIX=/api
+  # so the frontend calls the backend over the compose network instead of
+  # localhost. See docs/API_DOCUMENTATION.md for the full contract.
+  # backend:
+  #   build:
+  #     context: ../ppp-backend
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NODE_ENV=production
+  #   restart: unless-stopped

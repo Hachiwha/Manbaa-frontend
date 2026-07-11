@@ -8,6 +8,7 @@ import { AiResultsPanel } from "@/features/workspace/components/AiResultsPanel";
 import { ChatFab } from "@/features/workspace/components/ChatFab";
 import { WorkflowPreview } from "@/features/workspace/components/WorkflowPreview";
 import { useWorkspaceRealtime } from "@/lib/realtime/useWorkspaceRealtime";
+import { useBoardState } from "@/features/workspace/useBoardState";
 import { requireAuth } from "@/lib/auth/guards";
 import {
   getSession,
@@ -209,6 +210,17 @@ function WorkspacePage() {
     };
   }, [workflowStateData, diagramData]);
 
+  const board = useBoardState(flowNodes, flowEdges);
+
+  const handleAddSourceToBoard = (source: WorkspaceSource) => {
+    board.addNode(
+      "source-card",
+      { x: 80 + Math.random() * 120, y: 80 + Math.random() * 120 },
+      { title: source.name, sourceType: source.type, sourceId: source.id },
+    );
+    setSourcesOpen(false);
+  };
+
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
       <TopBar
@@ -232,6 +244,7 @@ function WorkspacePage() {
             versions={versions}
             sessionId={sessionId}
             workflowId={workflowId}
+            onAddToBoard={handleAddSourceToBoard}
           />
         </div>
 
@@ -240,8 +253,16 @@ function WorkspacePage() {
             of a fixed column. */}
         <div className="min-w-0 flex-1">
           <WorkflowPreview
-            nodes={flowNodes}
-            edges={flowEdges}
+            nodes={board.nodes}
+            edges={board.edges}
+            onNodesChange={board.onNodesChange}
+            onEdgesChange={board.onEdgesChange}
+            onConnect={board.onConnect}
+            onAddNode={board.addNode}
+            onDeleteNode={board.deleteNode}
+            onDuplicateNode={board.duplicateNode}
+            onBringNodeToFront={board.bringToFront}
+            onSendNodeToBack={board.sendToBack}
             workflowData={aiResponse}
             workflowId={workflowId}
             onChooseNodeInChat={setSelectedNodeForChat}
@@ -283,6 +304,7 @@ function WorkspacePage() {
             versions={versions}
             sessionId={sessionId}
             workflowId={workflowId}
+            onAddToBoard={handleAddSourceToBoard}
             onCollapse={() => setSourcesOpen(false)}
             className="w-full border-r-0"
           />

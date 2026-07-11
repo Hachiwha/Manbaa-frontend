@@ -65,7 +65,7 @@ export interface RfFlowNodeData {
 }
 
 export function isRfFlowNodeData(
-  data: FlowStepData | RfFlowNodeData,
+  data: FlowStepData | RfFlowNodeData | SketchNodeData,
 ): data is RfFlowNodeData {
   return (
     "kind" in data &&
@@ -74,5 +74,56 @@ export function isRfFlowNodeData(
   );
 }
 
-export type FlowNode = Node<FlowStepData | RfFlowNodeData>;
+/**
+ * Sketch Board node registry (cahier §2.3/§7): freeform nodes a user places
+ * on the canvas directly, plus source/RAG/AI-generated cards that land on
+ * the board from the Sources and AI Results panels.
+ */
+export type SketchNodeKind =
+  | "sticky-note"
+  | "text"
+  | "heading"
+  | "shape"
+  | "frame"
+  | "source-card"
+  | "citation-card"
+  | "chat-response"
+  | "concept-card"
+  | "asset-card";
+
+export const SKETCH_NODE_KINDS: SketchNodeKind[] = [
+  "sticky-note",
+  "text",
+  "heading",
+  "shape",
+  "frame",
+  "source-card",
+  "citation-card",
+  "chat-response",
+  "concept-card",
+  "asset-card",
+];
+
+export interface SketchNodeData {
+  kind: SketchNodeKind;
+  title?: string;
+  content?: string;
+  shapeVariant?: "rectangle" | "circle" | "diamond";
+  sourceType?: SourceType;
+  sourceId?: string;
+  citationSourceTitle?: string;
+  role?: ChatRole;
+  assetType?: "logo" | "palette" | "typography" | "guideline";
+  confidence?: number;
+}
+
+export function isSketchNodeData(
+  data: FlowStepData | RfFlowNodeData | SketchNodeData,
+): data is SketchNodeData {
+  return (
+    "kind" in data && SKETCH_NODE_KINDS.includes((data as SketchNodeData).kind)
+  );
+}
+
+export type FlowNode = Node<FlowStepData | RfFlowNodeData | SketchNodeData>;
 export type FlowEdge = Edge;
