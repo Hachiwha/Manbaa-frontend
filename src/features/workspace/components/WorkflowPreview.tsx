@@ -11,7 +11,19 @@ import ReactFlow, {
   ReactFlowProvider,
 } from "reactflow";
 import { motion } from "framer-motion";
-import { Maximize2, Minimize2, Rocket, Download, Coins, Gauge, FileJson, FileText, Check, Copy, Share2 } from "lucide-react";
+import {
+  Maximize2,
+  Minimize2,
+  Rocket,
+  Download,
+  Coins,
+  Gauge,
+  FileJson,
+  FileText,
+  Check,
+  Copy,
+  Share2,
+} from "lucide-react";
 import BpmnViewer from "bpmn-js/lib/NavigatedViewer";
 import { jsonToBpmn } from "@/lib/jsonToBpmn";
 import jsPDF from "jspdf";
@@ -27,7 +39,13 @@ import {
   RfDecisionNode,
   RfStubNode,
 } from "./aiFlowNodes";
-import { isRfFlowNodeData, type FlowEdge, type FlowNode, type FlowStepData, type RfFlowNodeData } from "../types";
+import {
+  isRfFlowNodeData,
+  type FlowEdge,
+  type FlowNode,
+  type FlowStepData,
+  type RfFlowNodeData,
+} from "../types";
 import { cn } from "@/lib/utils";
 import type { AiWorkflowResponse } from "../aiWorkflow.types";
 
@@ -41,7 +59,6 @@ interface WorkflowPreviewProps {
   workflowId?: string;
   className?: string;
 }
-
 
 const nodeTypes = {
   step: StepNode,
@@ -70,7 +87,9 @@ function minimapColor(node: Node) {
       case "rfDecision":
         return "var(--warning)";
       case "rfTask":
-        return d.variant === "taskSystem" ? "var(--ink-muted-48)" : "var(--primary)";
+        return d.variant === "taskSystem"
+          ? "var(--ink-muted-48)"
+          : "var(--primary)";
       case "rfStart":
       case "rfEnd":
         return "var(--success)";
@@ -99,7 +118,9 @@ function FlowDiagram({
   setSelected: (n: FlowNode | null) => void;
   showInspector: boolean;
   contextMenu: { node: FlowNode; position: { x: number; y: number } } | null;
-  setContextMenu: (v: { node: FlowNode; position: { x: number; y: number } } | null) => void;
+  setContextMenu: (
+    v: { node: FlowNode; position: { x: number; y: number } } | null,
+  ) => void;
   onChooseNodeInChat?: (node: FlowNode) => void;
 }) {
   return (
@@ -117,10 +138,15 @@ function FlowDiagram({
         onPaneClick={() => setSelected(null)}
         onNodeContextMenu={(e, n) => {
           e.preventDefault();
-          setContextMenu({ node: n as FlowNode, position: { x: e.clientX, y: e.clientY } });
+          setContextMenu({
+            node: n as FlowNode,
+            position: { x: e.clientX, y: e.clientY },
+          });
         }}
       >
-        <FitViewOnLayout layoutKey={`${nodesWithSelection.length}-${styledEdges.length}`} />
+        <FitViewOnLayout
+          layoutKey={`${nodesWithSelection.length}-${styledEdges.length}`}
+        />
         <Background
           variant={BackgroundVariant.Dots}
           gap={18}
@@ -161,7 +187,9 @@ function FlowDiagram({
             <RfInspector data={selected.data} id={selected.id} />
           ) : (
             <>
-              <h4 className="mt-1.5 text-sm font-semibold">{(selected.data as FlowStepData).title}</h4>
+              <h4 className="mt-1.5 text-sm font-semibold">
+                {(selected.data as FlowStepData).title}
+              </h4>
               <p className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">
                 {(selected.data as FlowStepData).subtitle}
               </p>
@@ -173,7 +201,11 @@ function FlowDiagram({
                   />
                   <Stat
                     label="Source"
-                    value={(selected.data as FlowStepData).inferred ? "AI inferred" : "From doc"}
+                    value={
+                      (selected.data as FlowStepData).inferred
+                        ? "AI inferred"
+                        : "From doc"
+                    }
                   />
                 </div>
               )}
@@ -188,7 +220,9 @@ function FlowDiagram({
           position={contextMenu.position}
           onClose={() => setContextMenu(null)}
           onAddComment={(nodeId) => {
-            const comment = window.prompt(`Add comment for "${contextMenu.node.data?.title || nodeId}":`);
+            const comment = window.prompt(
+              `Add comment for "${contextMenu.node.data?.title || nodeId}":`,
+            );
             if (comment) {
               console.log("Create comment:", { nodeId, comment });
             }
@@ -205,9 +239,13 @@ function FlowDiagram({
 function RfInspector({ data, id }: { data: RfFlowNodeData; id: string }) {
   return (
     <>
-      <p className="mt-1 text-[9px] font-mono uppercase tracking-wide text-muted-foreground">Node id · {id}</p>
+      <p className="mt-1 text-[9px] font-mono uppercase tracking-wide text-muted-foreground">
+        Node id · {id}
+      </p>
       <h4 className="mt-1.5 text-sm font-semibold">{data.title}</h4>
-      <p className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">{data.subtitle}</p>
+      <p className="mt-0.5 text-[11.5px] leading-snug text-muted-foreground">
+        {data.subtitle}
+      </p>
       <dl className="mt-2.5 space-y-1.5 text-[11px]">
         <div className="flex justify-between gap-2">
           <dt className="text-muted-foreground">Kind</dt>
@@ -216,19 +254,25 @@ function RfInspector({ data, id }: { data: RfFlowNodeData; id: string }) {
         {data.actor ? (
           <div className="flex justify-between gap-2">
             <dt className="text-muted-foreground">Actor</dt>
-            <dd className="text-right font-medium text-foreground">{data.actor}</dd>
+            <dd className="text-right font-medium text-foreground">
+              {data.actor}
+            </dd>
           </div>
         ) : null}
         {data.taskType ? (
           <div className="flex justify-between gap-2">
             <dt className="text-muted-foreground">Task type</dt>
-            <dd className="font-medium capitalize text-foreground">{data.taskType}</dd>
+            <dd className="font-medium capitalize text-foreground">
+              {data.taskType}
+            </dd>
           </div>
         ) : null}
         {data.question ? (
           <div>
             <dt className="text-muted-foreground">Question</dt>
-            <dd className="mt-0.5 font-medium leading-snug text-foreground">{data.question}</dd>
+            <dd className="mt-0.5 font-medium leading-snug text-foreground">
+              {data.question}
+            </dd>
           </div>
         ) : null}
         {data.outcomeHandles && data.outcomeHandles.length > 0 ? (
@@ -236,7 +280,10 @@ function RfInspector({ data, id }: { data: RfFlowNodeData; id: string }) {
             <dt className="text-muted-foreground">Outcomes</dt>
             <dd className="mt-1 space-y-1">
               {data.outcomeHandles.map((h) => (
-                <div key={h.id} className="rounded border border-border bg-surface/60 px-2 py-1 text-[10px]">
+                <div
+                  key={h.id}
+                  className="rounded border border-border bg-surface/60 px-2 py-1 text-[10px]"
+                >
                   {h.label}
                 </div>
               ))}
@@ -259,7 +306,10 @@ export function WorkflowPreview({
   className,
 }: WorkflowPreviewProps) {
   const [selected, setSelected] = useState<FlowNode | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ node: FlowNode; position: { x: number; y: number } } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    node: FlowNode;
+    position: { x: number; y: number };
+  } | null>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -287,18 +337,25 @@ export function WorkflowPreview({
       canvas.zoom("fit-viewport");
 
       const { svg } = await viewer.saveSVG();
-      const svgEl = new DOMParser().parseFromString(svg, "image/svg+xml").documentElement;
+      const svgEl = new DOMParser().parseFromString(
+        svg,
+        "image/svg+xml",
+      ).documentElement;
 
       let w = parseFloat(svgEl.getAttribute("width") || "0");
       let h = parseFloat(svgEl.getAttribute("height") || "0");
 
       if (!w) {
-        const vb = (svgEl.getAttribute("viewBox") || "0 0 1200 800").split(/[\s,]+/);
+        const vb = (svgEl.getAttribute("viewBox") || "0 0 1200 800").split(
+          /[\s,]+/,
+        );
         w = +vb[2] || 1200;
         h = +vb[3] || 800;
       }
 
-      const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" }));
+      const url = URL.createObjectURL(
+        new Blob([svg], { type: "image/svg+xml" }),
+      );
       const img = new Image();
 
       await new Promise<void>((resolve, reject) => {
@@ -316,7 +373,7 @@ export function WorkflowPreview({
           const doc = new jsPDF({
             orientation: w > h ? "landscape" : "portrait",
             unit: "px",
-            format: [w, h]
+            format: [w, h],
           });
 
           doc.addImage(canvasEl.toDataURL("image/png"), "PNG", 0, 0, w, h);
@@ -362,7 +419,11 @@ export function WorkflowPreview({
       edges.map((e) => ({
         ...e,
         type: e.type ?? "smoothstep",
-        style: { stroke: "var(--border-strong)", strokeWidth: 1.5, ...(e.style as object) },
+        style: {
+          stroke: "var(--border-strong)",
+          strokeWidth: 1.5,
+          ...(e.style as object),
+        },
       })),
     [edges],
   );
@@ -399,7 +460,11 @@ export function WorkflowPreview({
           className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors active:scale-90 hover:bg-surface-2 hover:text-foreground"
           aria-label={fullscreen ? "Exit full screen" : "Expand diagram"}
         >
-          {fullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+          {fullscreen ? (
+            <Minimize2 className="h-3.5 w-3.5" />
+          ) : (
+            <Maximize2 className="h-3.5 w-3.5" />
+          )}
         </button>
       </div>
     </div>
@@ -410,7 +475,9 @@ export function WorkflowPreview({
       <div className="mb-3 flex items-center justify-between text-[11px] text-muted-foreground">
         <span className="flex items-center gap-1.5">
           <Coins className="h-3 w-3" /> Est. tokens
-          <span className="font-semibold text-foreground">{estimatedTokens.toLocaleString()}</span>
+          <span className="font-semibold text-foreground">
+            {estimatedTokens.toLocaleString()}
+          </span>
         </span>
         <span className="flex items-center gap-1.5">
           <Gauge className="h-3 w-3" /> Accuracy
@@ -444,7 +511,6 @@ export function WorkflowPreview({
           {copied ? "Copié !" : "Exporter le projet"}
         </button>
       </div>
-
     </div>
   );
 
@@ -483,7 +549,7 @@ export function WorkflowPreview({
     <>
       <aside
         className={cn(
-          "flex h-full min-h-0 w-full shrink-0 flex-col border-l border-border bg-surface lg:w-[clamp(340px,30vw,440px)]",
+          "flex h-full min-h-0 w-full shrink-0 flex-col bg-background",
           expanded && "pointer-events-none invisible",
           className,
         )}
@@ -506,8 +572,12 @@ export function WorkflowPreview({
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-md border border-border bg-surface/70 px-2 py-1.5">
-      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-[12px] font-semibold text-foreground">{value}</div>
+      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-0.5 text-[12px] font-semibold text-foreground">
+        {value}
+      </div>
     </div>
   );
 }

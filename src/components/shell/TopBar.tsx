@@ -6,7 +6,6 @@ import {
   Menu,
   MoreVertical,
   PanelLeft,
-  PanelRight,
   Settings2,
   Share2,
 } from "lucide-react";
@@ -51,8 +50,6 @@ interface WorkspaceTopBarProps {
   onRenameProject?: (name: string) => void;
   sourcesOpen?: boolean;
   onToggleSources?: () => void;
-  boardOpen?: boolean;
-  onToggleBoard?: () => void;
 }
 
 type TopBarProps =
@@ -98,33 +95,20 @@ export function TopBar(props: TopBarProps) {
             onRename={props.onRenameProject}
           />
 
-          {/* Tablet: panel toggles (side panels are collapsible, hidden by default) */}
-          <div className="hidden items-center gap-1 md:flex lg:hidden">
-            <button
-              type="button"
-              onClick={props.onToggleSources}
-              aria-label="Toggle sources panel"
-              aria-pressed={props.sourcesOpen}
-              className={cn(
-                "grid h-9 w-9 place-items-center rounded-md text-body-on-dark transition-colors active:scale-90 hover:bg-white/10",
-                props.sourcesOpen && "bg-white/10",
-              )}
-            >
-              <PanelLeft className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={props.onToggleBoard}
-              aria-label="Toggle board panel"
-              aria-pressed={props.boardOpen}
-              className={cn(
-                "grid h-9 w-9 place-items-center rounded-md text-body-on-dark transition-colors active:scale-90 hover:bg-white/10",
-                props.boardOpen && "bg-white/10",
-              )}
-            >
-              <PanelRight className="h-4 w-4" />
-            </button>
-          </div>
+          {/* Tablet: Sources is the only collapsible side panel now - Board is the
+              always-visible primary view at every breakpoint per RULE 3. */}
+          <button
+            type="button"
+            onClick={props.onToggleSources}
+            aria-label="Toggle sources panel"
+            aria-pressed={props.sourcesOpen}
+            className={cn(
+              "hidden h-9 w-9 place-items-center rounded-md text-body-on-dark transition-colors active:scale-90 hover:bg-white/10 md:grid lg:hidden",
+              props.sourcesOpen && "bg-white/10",
+            )}
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
 
           <div className="ml-auto hidden items-center gap-1.5 md:flex">
             {props.workflowId ? (
@@ -165,16 +149,6 @@ export function TopBar(props: TopBarProps) {
                 className="flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-foreground transition-colors active:scale-[0.98] hover:bg-surface-2"
               >
                 <PanelLeft className="h-4 w-4" /> Sources
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  props.onToggleBoard?.();
-                  setMobileNavOpen(false);
-                }}
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium text-foreground transition-colors active:scale-[0.98] hover:bg-surface-2"
-              >
-                <PanelRight className="h-4 w-4" /> Board
               </button>
               {props.workflowId ? (
                 <ShareButton

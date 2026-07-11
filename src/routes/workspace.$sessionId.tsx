@@ -4,8 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TopBar } from "@/components/shell/TopBar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SourcesPanel } from "@/features/workspace/components/SourcesPanel";
-import { ChatPanel } from "@/features/workspace/components/ChatPanel";
+import { ChatFab } from "@/features/workspace/components/ChatFab";
 import { WorkflowPreview } from "@/features/workspace/components/WorkflowPreview";
+import { useWorkspaceRealtime } from "@/lib/realtime/useWorkspaceRealtime";
 import {
   getSession,
   getSessionWorkflowState,
@@ -16,12 +17,16 @@ import {
   getWorkflow,
   patchWorkflow,
 } from "@/lib/api";
-import {
-  MOCK_VERSIONS,
-} from "@/features/workspace/mock-data";
+import { MOCK_VERSIONS } from "@/features/workspace/mock-data";
 import { mapAiWorkflowToReactFlow } from "@/features/workspace/mapAiWorkflowToFlow";
 import type { AiWorkflowResponse } from "@/features/workspace/aiWorkflow.types";
-import type { FlowNode, FlowEdge, ChatMessage, WorkspaceSource, VersionEntry } from "@/features/workspace/types";
+import type {
+  FlowNode,
+  FlowEdge,
+  ChatMessage,
+  WorkspaceSource,
+  VersionEntry,
+} from "@/features/workspace/types";
 
 export const Route = createFileRoute("/workspace/$sessionId")({
   component: WorkspacePage,
@@ -30,9 +35,9 @@ export const Route = createFileRoute("/workspace/$sessionId")({
 function WorkspacePage() {
   const { sessionId } = Route.useParams();
   const queryClient = useQueryClient();
-  const [selectedNodeForChat, setSelectedNodeForChat] = useState<FlowNode | null>(null);
+  const [selectedNodeForChat, setSelectedNodeForChat] =
+    useState<FlowNode | null>(null);
   const [sourcesOpen, setSourcesOpen] = useState(false);
-  const [boardOpen, setBoardOpen] = useState(false);
 
   const { data: sessionData } = useQuery({
     queryKey: ["session", sessionId],
@@ -43,15 +48,25 @@ function WorkspacePage() {
 
   const workflowId = sessionData?.workflow_id;
 
+  // RULE 9: WebSocket first, poll as a max-5s fallback while disconnected.
+  const { connected: realtimeConnected } = useWorkspaceRealtime({
+    sessionId,
+    workflowId,
+  });
+  const fallbackPoll = realtimeConnected ? false : 5000;
+
   const { data: workflowData } = useQuery({
     queryKey: ["workflow", workflowId],
-    queryFn: () => workflowId ? getWorkflow(workflowId) : Promise.resolve(null),
+    queryFn: () =>
+      workflowId ? getWorkflow(workflowId) : Promise.resolve(null),
     enabled: !!workflowId,
+    refetchInterval: fallbackPoll,
   });
 
   const { data: diagramData } = useQuery({
     queryKey: ["workflow-diagram", workflowId],
-    queryFn: () => workflowId ? getWorkflowDiagramData(workflowId) : Promise.resolve(null),
+    queryFn: () =>
+      workflowId ? getWorkflowDiagramData(workflowId) : Promise.resolve(null),
     enabled: !!workflowId,
   });
 
@@ -59,52 +74,61 @@ function WorkspacePage() {
     queryKey: ["session-progress", sessionId],
     queryFn: () => getSessionProgress(sessionId),
     enabled: !!sessionId,
-    refetchInterval: 5000,
+    refetchInterval: fallbackPoll,
   });
 
   const { data: workflowStateData } = useQuery({
     queryKey: ["session-workflow-state", sessionId],
     queryFn: () => getSessionWorkflowState(sessionId),
     enabled: !!sessionId,
-    refetchInterval: 5000,
+    refetchInterval: fallbackPoll,
   });
 
   const { data: messagesData } = useQuery({
     queryKey: ["session-messages", sessionId],
     queryFn: () => listSessionMessages(sessionId),
     enabled: !!sessionId,
-    refetchInterval: 3000,
+    refetchInterval: fallbackPoll,
   });
 
   const { data: documentsData } = useQuery({
     queryKey: ["workflow-documents", workflowId],
-    queryFn: () => workflowId ? listWorkflowDocuments(workflowId) : Promise.resolve([]),
+    queryFn: () =>
+      workflowId ? listWorkflowDocuments(workflowId) : Promise.resolve([]),
     enabled: !!workflowId,
+    refetchInterval: fallbackPoll,
   });
 
-  const sources: WorkspaceSource[] = useMemo(() => 
-    (documentsData ?? []).map((doc) => ({
-      id: doc.id,
-      name: doc.filename,
-      type: doc.fileType?.includes("pdf") ? "pdf" 
-        : doc.fileType?.includes("image") ? "image"
-        : doc.fileType?.includes("word") ? "doc"
-        : "text" as const,
-      size: formatFileSize(doc.fileSizeBytes),
-      status: "ready" as const,
-      included: true,
-    })),
-    [documentsData]
+  const sources: WorkspaceSource[] = useMemo(
+    () =>
+      (documentsData ?? []).map((doc) => ({
+        id: doc.id,
+        name: doc.filename,
+        type: doc.fileType?.includes("pdf")
+          ? "pdf"
+          : doc.fileType?.includes("image")
+            ? "image"
+            : doc.fileType?.includes("word")
+              ? "doc"
+              : ("text" as const),
+        size: formatFileSize(doc.fileSizeBytes),
+        status: "ready" as const,
+        included: true,
+      })),
+    [documentsData],
   );
 
   const versions: VersionEntry[] = useMemo(() => {
     if (workflowStateData?.version_number) {
       return [
-        { 
-          id: `v_${workflowStateData.version_number}`, 
-          label: `Version ${workflowStateData.version_number}`, 
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), 
-          active: true 
+        {
+          id: `v_${workflowStateData.version_number}`,
+          label: `Version ${workflowStateData.version_number}`,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          active: true,
         },
         ...MOCK_VERSIONS.slice(0, 4).map((v) => ({ ...v, active: false })),
       ];
@@ -112,25 +136,37 @@ function WorkspacePage() {
     return MOCK_VERSIONS;
   }, [workflowStateData?.version_number]);
 
-  const messages: ChatMessage[] = useMemo(() => 
-    (messagesData?.data ?? []).map((msg) => ({
-      id: msg.id,
-      role: msg.role,
-      kind: msg.type === "user_input" ? "text" 
-        : msg.type === "ai_summary" ? "summary"
-        : msg.type === "ai_update" ? "update"
-        : msg.type === "system_status" ? "status"
-        : "text" as const,
-      content: msg.content,
-      timestamp: new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      ...(msg.metadata?.confidence_score ? { confidence: msg.metadata.confidence_score } : {}),
-    })),
-    [messagesData]
+  const messages: ChatMessage[] = useMemo(
+    () =>
+      (messagesData?.data ?? []).map((msg) => ({
+        id: msg.id,
+        role: msg.role,
+        kind:
+          msg.type === "user_input"
+            ? "text"
+            : msg.type === "ai_summary"
+              ? "summary"
+              : msg.type === "ai_update"
+                ? "update"
+                : msg.type === "system_status"
+                  ? "status"
+                  : ("text" as const),
+        content: msg.content,
+        timestamp: new Date(msg.created_at).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        ...(msg.metadata?.confidence_score
+          ? { confidence: msg.metadata.confidence_score }
+          : {}),
+      })),
+    [messagesData],
   );
 
   const renameMutation = useMutation({
     mutationFn: (title: string) => {
-      if (!workflowId) return Promise.reject(new Error("No workflow to rename"));
+      if (!workflowId)
+        return Promise.reject(new Error("No workflow to rename"));
       return patchWorkflow(workflowId, { title });
     },
     onSuccess: () => {
@@ -139,15 +175,19 @@ function WorkspacePage() {
   });
 
   const workflowTitle = workflowData?.title ?? "Untitled brand project";
-  const sessionMode = (sessionData?.mode === "auto" ? "AUTO" : "INTERACTIVE") as "AUTO" | "INTERACTIVE";
+  const sessionMode = (
+    sessionData?.mode === "auto" ? "AUTO" : "INTERACTIVE"
+  ) as "AUTO" | "INTERACTIVE";
 
   // Convert real workflow-state elementsJson into React Flow nodes/edges
   const { flowNodes, flowEdges, aiResponse } = useMemo(() => {
-    // @ts-ignore - The API returns elementsJson, but types.ts has elements_json
-    const elementsJson = (workflowStateData?.elementsJson || workflowStateData?.elements_json) as unknown as AiWorkflowResponse | null;
+    // @ts-expect-error - The API returns elementsJson, but types.ts has elements_json
+    const elementsJson = (workflowStateData?.elementsJson ||
+      workflowStateData?.elements_json) as unknown as AiWorkflowResponse | null;
     if (elementsJson?.entities && elementsJson?.flow) {
       try {
-        const { nodes: rfNodes, edges: rfEdges } = mapAiWorkflowToReactFlow(elementsJson);
+        const { nodes: rfNodes, edges: rfEdges } =
+          mapAiWorkflowToReactFlow(elementsJson);
         return {
           flowNodes: rfNodes as unknown as FlowNode[],
           flowEdges: rfEdges as unknown as FlowEdge[],
@@ -171,28 +211,28 @@ function WorkspacePage() {
         variant="workspace"
         workflowId={workflowId}
         projectName={workflowTitle}
-        onRenameProject={workflowId ? (title) => renameMutation.mutate(title) : undefined}
+        onRenameProject={
+          workflowId ? (title) => renameMutation.mutate(title) : undefined
+        }
         sourcesOpen={sourcesOpen}
         onToggleSources={() => setSourcesOpen((v) => !v)}
-        boardOpen={boardOpen}
-        onToggleBoard={() => setBoardOpen((v) => !v)}
       />
-      <div className="flex min-h-0 flex-1">
-        {/* Desktop (>=1024px): Sources + Board render inline alongside Chat. */}
+      <div className="relative flex min-h-0 flex-1">
+        {/* Sources is the only collapsible side panel - visible inline at
+            desktop, off-canvas below 1024px (opened from the TopBar). */}
         <div className="hidden lg:block lg:shrink-0">
-          <SourcesPanel sources={sources} versions={versions} sessionId={sessionId} workflowId={workflowId} />
+          <SourcesPanel
+            sources={sources}
+            versions={versions}
+            sessionId={sessionId}
+            workflowId={workflowId}
+          />
         </div>
 
-        <ChatPanel
-          messages={messages}
-          workflowTitle={workflowTitle}
-          mode={sessionMode}
-          sessionId={sessionId}
-          selectedNodeForChat={selectedNodeForChat}
-          onClearSelectedNode={() => setSelectedNodeForChat(null)}
-        />
-
-        <div className="hidden lg:block lg:shrink-0">
+        {/* Board is the primary, always-visible workspace view at every
+            breakpoint (RULE 3) - Chat is a floating button + drawer instead
+            of a fixed column. */}
+        <div className="min-w-0 flex-1">
           <WorkflowPreview
             nodes={flowNodes}
             edges={flowEdges}
@@ -201,11 +241,22 @@ function WorkspacePage() {
             onChooseNodeInChat={setSelectedNodeForChat}
           />
         </div>
+
+        <ChatFab
+          messages={messages}
+          workflowTitle={workflowTitle}
+          mode={sessionMode}
+          sessionId={sessionId}
+          selectedNodeForChat={selectedNodeForChat}
+          onClearSelectedNode={() => setSelectedNodeForChat(null)}
+        />
       </div>
 
-      {/* Mobile/tablet (<1024px): Sources + Board collapse into off-canvas sheets, opened from the TopBar. */}
       <Sheet open={sourcesOpen} onOpenChange={setSourcesOpen}>
-        <SheetContent side="left" className="w-[85vw] max-w-sm p-0 sm:max-w-sm lg:hidden">
+        <SheetContent
+          side="left"
+          className="w-[85vw] max-w-sm p-0 sm:max-w-sm lg:hidden"
+        >
           <SourcesPanel
             sources={sources}
             versions={versions}
@@ -213,22 +264,6 @@ function WorkspacePage() {
             workflowId={workflowId}
             onCollapse={() => setSourcesOpen(false)}
             className="w-full border-r-0"
-          />
-        </SheetContent>
-      </Sheet>
-
-      <Sheet open={boardOpen} onOpenChange={setBoardOpen}>
-        <SheetContent side="right" className="w-[92vw] max-w-xl p-0 sm:max-w-xl lg:hidden">
-          <WorkflowPreview
-            nodes={flowNodes}
-            edges={flowEdges}
-            workflowData={aiResponse}
-            workflowId={workflowId}
-            onChooseNodeInChat={(node) => {
-              setSelectedNodeForChat(node);
-              setBoardOpen(false);
-            }}
-            className="w-full border-l-0"
           />
         </SheetContent>
       </Sheet>

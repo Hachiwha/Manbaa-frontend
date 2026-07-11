@@ -14,14 +14,21 @@ export const Route = createFileRoute("/shared/$token")({
 function SharedWorkflowPage() {
   const { token } = Route.useParams();
 
-  const { data: workflowData, isLoading, error } = useQuery({
+  const {
+    data: workflowData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["shared-workflow", token],
     queryFn: async () => {
       // In a real application, we would call an actual API route that returns the shared workflow data
-      const res = await apiClient<{ id: string; title: string; elementsJson?: AiWorkflowResponse }>(
-        apiUrl(`/workflows/shared/${encodeURIComponent(token)}`),
-        { method: "GET" }
-      );
+      const res = await apiClient<{
+        id: string;
+        title: string;
+        elementsJson?: AiWorkflowResponse;
+      }>(apiUrl(`/workflows/shared/${encodeURIComponent(token)}`), {
+        method: "GET",
+      });
       return res;
     },
   });
@@ -42,7 +49,9 @@ function SharedWorkflowPage() {
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-2 text-destructive">
           <p className="text-xl font-semibold">Brand project not found</p>
-          <p className="text-sm">The share link may be invalid or has expired.</p>
+          <p className="text-sm">
+            The share link may be invalid or has expired.
+          </p>
         </div>
       </div>
     );
@@ -60,7 +69,6 @@ function SharedWorkflowPage() {
           nodes={nodes}
           edges={edges}
           workflowData={workflowData.elementsJson}
-          className="w-full border-l-0 lg:w-full"
         />
       </div>
     </div>
