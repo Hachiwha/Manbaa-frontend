@@ -18,7 +18,7 @@ COPY . .
 # VITE_* vars are inlined into the client bundle at build time (Vite, not
 # runtime) — pass them as build args, e.g.:
 #   docker build --build-arg VITE_API_BASE_URL=https://api.example.com .
-ARG VITE_API_BASE_URL=http://localhost:3000
+ARG VITE_API_BASE_URL=
 ARG VITE_API_PREFIX=/api
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL} \
     VITE_API_PREFIX=${VITE_API_PREFIX}
